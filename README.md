@@ -2,5 +2,5 @@
 edited homebrew formulae
 ```
 brew tap pooranis/self
-brew install <formulaname>
+brew install pooranis/self/<formulaname>
 ```
