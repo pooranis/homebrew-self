@@ -18,7 +18,7 @@ class Unison < Formula
 
   resource "unox" do
     url "https://github.com/hnsl/unox/archive/master.tar.gz"
-    sha256 "574c46b2af6a748a1937ac79436f7a656d7aeee79bb3c6a5566b48ad29667da3"
+    sha256 "31805a0bc24374a6fb2c09a403e7ffe2abe15d074dea268edea8dc1f5dd0c40d"
   end
 
   def install
