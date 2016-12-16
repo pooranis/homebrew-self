@@ -8,7 +8,7 @@ class Art < Formula
     url "https://www.niehs.nih.gov/research/resources/assets/docs/artsrcmountrainier20160605macostgz.tgz"
     version "20160605"
     sha256 "1c467c374ec17b1c2c815f4c24746bece878876faaf659c2541f280fe7ba85f7"
-
+  end
   revision 1
 
   depends_on "gsl"
