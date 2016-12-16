@@ -32,4 +32,3 @@ class Art < Formula
     system "#{bin}/art_454 | grep 'FLX'"
   end
 end
- 
