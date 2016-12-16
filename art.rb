@@ -31,4 +31,5 @@ class Art < Formula
     system "#{bin}/art_SOLiD | grep 'F3-F5'"
     system "#{bin}/art_454 | grep 'FLX'"
   end
+  
 end
