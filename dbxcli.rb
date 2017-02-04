@@ -1,8 +1,8 @@
 class Dbxcli < Formula
   desc "A command line client for Dropbox built using the Go SDK"
   homepage "https://github.com/dropbox/dbxcli"
-  url "https://github.com/dropbox/dbxcli/archive/v1.4.0.tar.gz"
-  sha256 "22999341f70a948204ed48b99e1e0536dd77e3fc3fb887c6291673834c8e66f0"
+  url "https://github.com/dropbox/dbxcli/archive/v2.0.0.tar.gz"
+  sha256 "a914fe87664e80c9374ef97b711fd04218c0afe87c5921e04e7afd01dd3ba06f"
   head "https://github.com/dropbox/dbxcli.git"
 
 
