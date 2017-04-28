@@ -12,7 +12,7 @@ class Pdfjam < Formula
     end
 
     prefix.install "bin"
-    share.mkpathb
+    share.mkpath
     share.install "pdfjam.conf"
     man.mkpath
     man1.install Dir["man1/*"]
