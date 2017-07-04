@@ -4,6 +4,10 @@ class Inkscape < Formula
   url "https://launchpad.net/inkscape/0.92.x/0.92.1/+download/inkscape-0.92.1.tar.bz2"
   mirror "https://mirrors.kernel.org/debian/pool/main/i/inkscape/inkscape_0.92.1.orig.tar.bz2"
   sha256 "257405bf802de125f17d123638093a37db02ebe334d243cf9b0d8903f7c89005"
+  
+  bottle do
+    sha256 "6003a5673c2e5e772abe3d56fafd2a0f80f8255a9b0ca28fcd458c7efbc239c2" => :sierra
+  end
 
   head do
     url "https://gitlab.com/inkscape/inkscape.git", :using => :git
