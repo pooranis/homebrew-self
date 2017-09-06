@@ -7,17 +7,21 @@ class Lofreq < Formula
   depends_on "automake" => :build
   depends_on "autoconf" => :build
   depends_on "libtool" => :build
-  depends_on "htslib" => :build
-  depends_on "samtools" => :build
 
-  patch :DATA
+  resource "samtools" do
+    url "http://downloads.sourceforge.net/project/samtools/samtools/1.1/samtools-1.1.tar.bz2"
+    sha256 24d26c303153d72b5bf3cc11f72c6c375a4ca1140cc485648c8c5473414b7f8
+  end
 
+  
   
   def install
     # ENV.deparallelize  # if your formula fails when building in parallel
-    inreplace "src/lofreq/Makefile.am", "@HTSLIB@/libhts.a", "#{Formula['htslib'].opt_lib}/libhts.a"
-    inreplace "src/lofreq/Makefile.am", "@SAMTOOLS@/libbam.a", "#{Formula['samtools'].opt_lib}/libbam.a"
 
+    resource("samtools").stage do
+      samtools_path = Pathname.pwd
+      make -j 4
+    end
     
     system "glibtoolize"
     system "./bootstrap"
@@ -26,14 +30,11 @@ class Lofreq < Formula
                           "--disable-dependency-tracking",
                           "--disable-silent-rules",
                           "--prefix=#{prefix}",
-                          "SAMTOOLS=#{Formula['samtools'].opt_include}/bam",
-                          "HTSLIB=/usr/local/include"
+                          "SAMTOOLS=#{samtools_path}",
+                          "HTSLIB=#{samtools_path}/htslib-1.1"
 
-    ENV.append "LDFLAGS", " -L#{HOMEBREW_PREFIX}/lib"
-    ENV.append "LDFLAGS", " -lbam"
-    ENV.append "LDFLAGS", " -lhts"
     
-    system "make", "LDFLAGS=#{ENV.ldflags}" # if this fails, try separate make/make install steps
+    system "make" # if this fails, try separate make/make install steps
     system "make", "install"
   end
 
@@ -51,16 +52,4 @@ class Lofreq < Formula
   end
 end
 
-__END__
-diff --git a/src/lofreq/bam_md_ext.h b/src/lofreq/bam_md_ext.h
-index 2c8d90c..4510787 100644
---- a/src/lofreq/bam_md_ext.h
-+++ b/src/lofreq/bam_md_ext.h
-@@ -23,6 +23,7 @@
-    SOFTWARE.
- */
- 
-+#undef bam_nt16_nt4_table
- #ifndef BAM_MD_EXT_H
- #define BAM_MD_EXT_H
- 
+
