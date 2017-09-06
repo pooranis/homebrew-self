@@ -10,7 +10,7 @@ class Lofreq < Formula
 
   resource "samtools" do
     url "http://downloads.sourceforge.net/project/samtools/samtools/1.1/samtools-1.1.tar.bz2"
-    sha256 "24d26c303153d72b5bf3cc11f72c6c375a4ca1140cc485648c8c5473414b7f8"
+    sha256 "c24d26c303153d72b5bf3cc11f72c6c375a4ca1140cc485648c8c5473414b7f8"
   end
 
   
@@ -18,11 +18,12 @@ class Lofreq < Formula
   def install
     # ENV.deparallelize  # if your formula fails when building in parallel
 
-    resource("samtools").stage do
-      samtools_path = Pathname.pwd
-      make -j 4
+    resource("samtools").stage "#{buildpath}/samtools"
+    cd "#{buildpath}/samtools" do
+      system "make", "-j4"
     end
-    
+
+
     system "glibtoolize"
     system "./bootstrap"
     # Remove unrecognized options if warned by configure
@@ -30,8 +31,8 @@ class Lofreq < Formula
                           "--disable-dependency-tracking",
                           "--disable-silent-rules",
                           "--prefix=#{prefix}",
-                          "SAMTOOLS=#{samtools_path}",
-                          "HTSLIB=#{samtools_path}/htslib-1.1"
+                          "SAMTOOLS=#{buildpath}/samtools",
+                          "HTSLIB=#{buildpath}/samtools/htslib-1.1"
 
     
     system "make" # if this fails, try separate make/make install steps
