@@ -10,7 +10,7 @@ class Lofreq < Formula
 
   resource "samtools" do
     url "http://downloads.sourceforge.net/project/samtools/samtools/1.1/samtools-1.1.tar.bz2"
-    sha256 24d26c303153d72b5bf3cc11f72c6c375a4ca1140cc485648c8c5473414b7f8
+    sha256 "24d26c303153d72b5bf3cc11f72c6c375a4ca1140cc485648c8c5473414b7f8"
   end
 
   
