@@ -37,9 +37,6 @@ class R < Formula
       ENV["ac_cv_have_decl_clock_gettime"] = "no"
     end
 
-    # Fix cairo detection with Quartz-only cairo
-    inreplace ["configure", "m4/cairo.m4"], "cairo-xlib.h", "cairo.h"
-
     args = [
       "--prefix=#{prefix}",
       "--enable-memory-profiling",
