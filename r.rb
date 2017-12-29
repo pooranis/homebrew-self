@@ -19,6 +19,7 @@ class R < Formula
   depends_on "cairo" => :optional
   depends_on "openblas" => :optional
   depends_on :java => :optional
+  depends_on :x11 => :optional
 
   # needed to preserve executable permissions on files without shebangs
   skip_clean "lib/R/bin"
@@ -67,6 +68,8 @@ class R < Formula
     else
       args << "--without-cairo"
     end
+    
+    if build.without? "x11" args << "--without-x"
     
     # Help CRAN packages find gettext and readline
     ["gettext", "readline"].each do |f|
