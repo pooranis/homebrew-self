@@ -1,8 +1,8 @@
 class AssemblyStats < Formula
   desc "Get assembly statistics from FASTA and FASTQ files"
   homepage "https://github.com/sanger-pathogens/assembly-stats"
-  url "https://github.com/sanger-pathogens/assembly-stats/archive/v1.0.0.tar.gz"
-  sha256 "29db86efa655f8e50a0807aadb863a532a56b41985ffc5faf1b27afe36be8dc8"
+  url "https://github.com/sanger-pathogens/assembly-stats/archive/v1.0.1.tar.gz"
+  sha256 "02be614da4d244673bcd0adc6917749681d52a58cb0a039c092d01cdeabd8575"
 
   depends_on "cmake" => :build
 
