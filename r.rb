@@ -69,7 +69,7 @@ class R < Formula
       args << "--without-cairo"
     end
     
-    if build.without? "x11" args << "--without-x"
+    args << "--without-x11" if build.without? "x11"
     
     # Help CRAN packages find gettext and readline
     ["gettext", "readline"].each do |f|
