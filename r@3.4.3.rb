@@ -1,4 +1,4 @@
-class R < Formula
+class RAT343 < Formula
   desc "Software environment for statistical computing"
   homepage "https://www.r-project.org/"
   url "https://cran.rstudio.com/src/base/R-3/R-3.4.3.tar.gz"
