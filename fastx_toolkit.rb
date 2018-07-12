@@ -6,7 +6,7 @@ class FastxToolkit < Formula
   revision 2
 
   stable do
-    url "https://codeload.github.com/pooranis/fastx_toolkit/legacy.tar.gz/master/pooranis-fastx_toolkit-0.0.14-2-g0497a17.tar.gz"
+    url "https://codeload.github.com/pooranis/fastx_toolkit/legacy.tar.gz/master/"
     sha256 "e59ef63e251583a6de02c85c58a462850900df8c9961b8a956f79f68b9ead198"
 
     resource "libgtextutils" do
