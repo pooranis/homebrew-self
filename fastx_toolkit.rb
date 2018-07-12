@@ -2,7 +2,7 @@ class FastxToolkit < Formula
   desc "Process short-read FASTA/FASTQ sequencing files"
   homepage "http://hannonlab.cshl.edu/fastx_toolkit/"
   # tag "bioinformatics"
-  version 0.0.14
+  version '0.0.14'
   revision 2
 
   stable do
