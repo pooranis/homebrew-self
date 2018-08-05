@@ -15,7 +15,7 @@ class RAT343 < Formula
   depends_on "pcre"
   depends_on "readline"
   depends_on "xz"
-  depends_on gcc #fortran
+  depends_on "gcc" #fortran
   depends_on "cairo" => :optional
   depends_on "openblas" => :optional
   depends_on :java => :optional
