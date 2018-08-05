@@ -126,7 +126,7 @@ class R < Formula
     ln_s site_library, lib/"R/site-library"
     
     ## change permissions on html directory
-    html_doc = = lib/"R/doc/html"
+    html_doc = lib/"R/doc/html"
     system "chmod", "-R", "u+w", html_doc
   end
 
