@@ -2,7 +2,7 @@
 #                https://www.rubydoc.info/github/Homebrew/brew/master/Formula
 # PLEASE REMOVE ALL GENERATED COMMENTS BEFORE SUBMITTING YOUR PULL REQUEST!
 class Cpdf < Formula
-  desc "The Coherent PDF Command Line Tools allow you to manipulate existing PDF files in a variety of ways.  Free for non-commercial use."
+  desc "The Coherent PDF Command Line Tools allow you to manipulate existing PDF files in a variety of ways.  Free for non-commercial, private, personal use.  See homepage for more information."
   homepage "https://community.coherentpdf.com/"
   url "https://github.com/coherentgraphics/cpdf-binaries/archive/master.zip"
   version "v2.2-patchlevel1"
