@@ -10,7 +10,7 @@ class R < Formula
     sha256 "25a1bfde0afffc6e186e60a2959c2d9aba89147c4f338ba5499c04d35bbfecb7" => :sierra
   end
 
-  option "with-texinfo", "Build html manual with texinfo; requires perl module Locale::Messages to already be installed"
+  option "with-texinfo", "Build html manual with texinfo"
 
   depends_on "pkg-config" => :build
   depends_on "gcc" # for gfortran
@@ -36,16 +36,6 @@ class R < Formula
   end
 
   def install
-
-    ## if building manual check for Locale::Messages
-    if build.with? "texinfo"
-      begin
-        safe_system "perldoc", "-l", "Locale::Messages"
-      rescue ErrorDuringExecution => e
-        odie "The 'with-texinfo' option requires the perl module Locale::Messages which cannot be found.  Please try to install it with cpan (and possibly sudo)."
-      end
-    end
-
 
     # Fix dyld: lazy symbol binding failed: Symbol not found: _clock_gettime
     if MacOS.version == "10.11" && MacOS::Xcode.installed? &&
@@ -85,8 +75,12 @@ class R < Formula
       args << "--without-cairo"
     end
 
+    if build.with? "texinfo"
+      args << "INSTALL_INFO=/usr/bin/install-info"
+    end
+
     # Help CRAN packages find gettext and readline
-    ["gettext", "readline", "texinfo"].each do |f|
+    ["gettext", "readline"].each do |f|
       ENV.append "CPPFLAGS", "-I#{Formula[f].opt_include}"
       ENV.append "LDFLAGS", "-L#{Formula[f].opt_lib}"
     end
