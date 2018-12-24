@@ -38,8 +38,12 @@ class R < Formula
   def install
 
     ## if building manual check for Locale::Messages
-    if build.with? "texinfo" && !(system "perldoc -l Locale::Messages")
-      odie "--with-texinfo requires Perl library Locale::Messages to be installed.  You can install with cpan (and maybe sudo?)."
+    if build.with? "texinfo"
+      begin
+        safe_system "perldoc", "-l", "Locale::Messages"
+      rescue ErrorDuringExecution => e
+        odie "The 'with-texinfo' option requires the perl module Locale::Messages which cannot be found.  Please try to install it with cpan (and possibly sudo)."
+      end
     end
 
 
