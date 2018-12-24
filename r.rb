@@ -1,15 +1,16 @@
 class R < Formula
   desc "Software environment for statistical computing"
   homepage "https://www.r-project.org/"
-  url "https://cran.r-project.org/src/base/R-3/R-3.5.1.tar.gz"
-  sha256 "0463bff5eea0f3d93fa071f79c18d0993878fd4f2e18ae6cf22c1639d11457ed"
+  url "https://cran.r-project.org/src/base/R-3/R-3.5.2.tar.gz"
+  sha256 "e53d8c3cf20f2b8d7a9c1631b6f6a22874506fb392034758b3bb341c586c5b62"
 
   bottle do
-    sha256 "4cdfd2024463182b97053abf06d8e575a3b2cc9b432255f1a5398da3fd067515" => :high_sierra
-    sha256 "de63492e498039f4724b5565fb9f6591f1b8639ed01bce78d92eefb579526ef4" => :sierra
-    sha256 "20d6f0a9f62ef08f7ddc7dc3cf731681f35ea0757ffb42b6c63c6c472d147240" => :el_capitan
+    sha256 "08120ed5b37e5cf4b067e03ba8cd90bd03c6c4af66d20ab96be3abe2658a4a63" => :mojave
+    sha256 "406e19fb1c47097b3e4f9f36cc9f6bb211dc268aa2fb5603bfe814c11bbdf657" => :high_sierra
+    sha256 "25a1bfde0afffc6e186e60a2959c2d9aba89147c4f338ba5499c04d35bbfecb7" => :sierra
   end
 
+  option "with-texinfo", "Build html manual with texinfo; requires perl module Locale::Messages to already be installed"
 
   depends_on "pkg-config" => :build
   depends_on "gcc" # for gfortran
@@ -19,9 +20,11 @@ class R < Formula
   depends_on "pcre"
   depends_on "readline"
   depends_on "xz"
-  depends_on "openblas" => :optional
   depends_on :java => :optional
+  depends_on "openblas" => :optional
   depends_on "cairo" => :optional
+  ## to build manuals
+  depends_on "texinfo" => :optional
 
   # needed to preserve executable permissions on files without shebangs
   skip_clean "lib/R/bin"
@@ -33,6 +36,13 @@ class R < Formula
   end
 
   def install
+
+    ## if building manual check for Locale::Messages
+    if build.with? "texinfo" && !(system "perldoc -l Locale::Messages")
+      odie "--with-texinfo requires Perl library Locale::Messages to be installed.  You can install with cpan (and maybe sudo?)."
+    end
+
+
     # Fix dyld: lazy symbol binding failed: Symbol not found: _clock_gettime
     if MacOS.version == "10.11" && MacOS::Xcode.installed? &&
        MacOS::Xcode.version >= "8.0"
@@ -42,12 +52,11 @@ class R < Formula
     args = [
       "--prefix=#{prefix}",
       "--enable-memory-profiling",
+      "--without-x",
       "--with-aqua",
       "--with-lapack",
       "--enable-R-shlib",
-      "--without-x",
-      "SED=/usr/bin/sed",
-      ""# don't remember Homebrew's sed shim
+      "SED=/usr/bin/sed", # don't remember Homebrew's sed shim
     ]
 
     if build.with? "openblas"
@@ -73,13 +82,12 @@ class R < Formula
     end
 
     # Help CRAN packages find gettext and readline
-    ["gettext", "readline"].each do |f|
+    ["gettext", "readline", "texinfo"].each do |f|
       ENV.append "CPPFLAGS", "-I#{Formula[f].opt_include}"
       ENV.append "LDFLAGS", "-L#{Formula[f].opt_lib}"
     end
 
     system "./configure", *args
-    system "echo", "$PATH"
     system "make"
     ENV.deparallelize do
       system "make", "install"
@@ -99,7 +107,6 @@ class R < Formula
         system "make", "install"
       end
     end
-
 
     r_home = lib/"R"
 
@@ -124,7 +131,7 @@ class R < Formula
     site_library = HOMEBREW_PREFIX/"lib/R/#{short_version}/site-library"
     site_library.mkpath
     ln_s site_library, lib/"R/site-library"
-    
+
     ## change permissions on html directory
     html_doc = lib/"R/doc/html"
     system "chmod", "-R", "u+w", html_doc
