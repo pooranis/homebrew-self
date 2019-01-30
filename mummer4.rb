@@ -14,7 +14,7 @@ class Mummer4 < Formula
 
   depends_on "gcc" => :build
   fails_with :clang ## we want to build with homebrew gcc https://github.com/mummer4/mummer/blob/master/INSTALL.md#dependencies
-  depends_on "gnuplot@4" => :recommended
+  depends_on "gnuplot" => :recommended
   depends_on "xfig" => :recommended
   depends_on "fig2dev" => :recommended
 
