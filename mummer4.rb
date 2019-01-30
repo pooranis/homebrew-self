@@ -15,8 +15,8 @@ class Mummer4 < Formula
   depends_on "gcc" => :build
   fails_with :clang ## we want to build with homebrew gcc https://github.com/mummer4/mummer/blob/master/INSTALL.md#dependencies
   depends_on "gnuplot" => :recommended
-  depends_on "xfig" => :recommended
-  depends_on "fig2dev" => :recommended
+  # depends_on "xfig" => :recommended
+  # depends_on "fig2dev" => :recommended
 
 
   def install
@@ -53,7 +53,7 @@ class Mummer4 < Formula
 
   def caveats
     <<~EOS
-        gnuplot, xfig, and fig2dev are only used for MUMmer's visualization tools.  If you don't need those tools, then you can install without the recommended dependencies.
+        gnuplot is only used for MUMmer's visualization tools.  If you don't need those tools, then you can install without the recommended dependencies.  For gnuplot with qt see this mummerplot script https://gitlab.com/pooranis/code/blob/master/mummerplot
 
         SWIG bindings
         =============
