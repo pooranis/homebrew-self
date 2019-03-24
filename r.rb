@@ -1,20 +1,17 @@
 class R < Formula
   desc "Software environment for statistical computing"
   homepage "https://www.r-project.org/"
-  url "https://cran.r-project.org/src/base/R-3/R-3.5.2.tar.gz"
-  sha256 "e53d8c3cf20f2b8d7a9c1631b6f6a22874506fb392034758b3bb341c586c5b62"
-  revision 2
+  url "https://cran.r-project.org/src/base/R-3/R-3.5.3.tar.gz"
+  sha256 "2bfa37b7bd709f003d6b8a172ddfb6d03ddd2d672d6096439523039f7a8e678c"
 
   ## See https://github.com/sethrfore/homebrew-r-srf
   ## and https://github.com/adamhsparks/setup_macOS_for_R for help as well
 
-  bottle do
-    sha256 "a1d8588a967294aa86a5aa233e51360d47643722e802d287cfd9c15bea49bd04" => :mojave
-    sha256 "63aee750beb4a60a4508ee25cf0913151e2df8aeb81dc2fcf75e0ae569010ba6" => :high_sierra
-    sha256 "ea8f566f2f19e0aa0d962eea36f38eca1bc37ad281d5c79feb2aab18a47491a0" => :sierra
-  end
 
-  option "with-texinfo", "Build html manual with texinfo"
+  option "with-texinfo", "Build html manual with texinfo.
+        install-info must be installed and in your path (usually, /usr/bin/install-info).
+        If pdftex is also in your path, then you will also have
+        the ability to make pdf help files, but this is optional."
 
   depends_on "pkg-config" => :build
   depends_on "gcc" # for gfortran
@@ -27,10 +24,13 @@ class R < Formula
   depends_on "openblas"
   depends_on "libtiff" => :optional
   depends_on "llvm" => :optional
+  depends_on "pango" => :optional
   depends_on "cairo" => :optional
+  depends_on :java => :optional
+  
   ## to build manuals
   depends_on "texinfo" => :optional
-  depends_on :java => :optional
+
 
   # needed to preserve executable permissions on files without shebangs
   skip_clean "lib/R/bin"
@@ -56,7 +56,9 @@ class R < Formula
       "--with-lapack",
       "--enable-R-shlib",
       "SED=/usr/bin/sed", # don't remember Homebrew's sed shim
-      "--with-blas=-L#{Formula["openblas"].opt_lib} -lopenblas"
+      "--with-blas=-L#{Formula["openblas"].opt_lib} -lopenblas",
+      "--enable-prebuilt-html",
+      "--enable-lto"
     ]
 
     ## blas linking flags
@@ -88,8 +90,22 @@ class R < Formula
     end
 
     if build.with? "texinfo"
-      args << "INSTALL_INFO=/usr/bin/install-info"
-      ENV.append_path "PATH", "/usr/local/texlive/2018basic/bin/x86_64-darwin"
+      installinfopath = which("install-info", path = ORIGINAL_PATHS)
+      if installinfopath.nil?
+        odie "--texinfo option passed, but install-info not found in your PATH.  It is needed 
+        to make the manual.  Either remove --texinfo option to the brew install command
+        or add the path to install-info to your PATH environment variable."
+      end
+      args << "INSTALL_INFO=#{installinfopath}"
+      pdftexpath = File.dirname(which("pdftex", path = ORIGINAL_PATHS))
+      
+      if pdftexpath.nil?
+        opoo "--texinfo option passed, but pdftex not found in original PATH.  It is only 
+        needed if you want to make pdf manuals, so these will not be made."
+      else
+        ENV.append_path "PATH", pdftexpath
+      end
+      
     end
 
     # Help CRAN packages find gettext and readline
@@ -100,24 +116,24 @@ class R < Formula
 
     system "./configure", *args
     system "make"
-    ENV.deparallelize do
+#    ENV.deparallelize do
       system "make", "install"
-    end
+#    end
 
     cd "src/nmath/standalone" do
       system "make"
-      ENV.deparallelize do
+#      ENV.deparallelize do
         system "make", "install"
-      end
+#      end
     end
 
     ## build manuals
     if build.with? "texinfo"
       cd "doc/manual" do
         system "make", "html"
-        ENV.deparallelize do
+#        ENV.deparallelize do
           system "make", "install"
-        end
+#        end
       end
     end
 
