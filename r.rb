@@ -7,12 +7,6 @@ class R < Formula
   ## See https://github.com/sethrfore/homebrew-r-srf
   ## and https://github.com/adamhsparks/setup_macOS_for_R for help as well
 
-
-  option "with-texinfo", "Build html manual with texinfo.
-        install-info must be installed and in your path (usually, /usr/bin/install-info).
-        If pdftex is also in your path, then you will also have
-        the ability to make pdf help files, but this is optional."
-
   depends_on "pkg-config" => :build
   depends_on "gcc" # for gfortran
   depends_on "gettext"
@@ -22,14 +16,29 @@ class R < Formula
   depends_on "readline"
   depends_on "xz"
   depends_on "openblas"
-  depends_on "libtiff" => :optional
+  depends_on "libtiff" => :recommended
   depends_on "llvm" => :optional
   depends_on "pango" => :optional
+  option "with-pango", "Pango support is only available if also building --with-cairo."
   depends_on "cairo" => :optional
   depends_on :java => :optional
   
   ## to build manuals
-  depends_on "texinfo" => :optional
+  option "without-texinfo", "Don't build html manual with texinfo."
+  depends_on "texinfo" => :recommended
+
+  def caveats
+    <<~EOS
+        By default, texinfo is used to build the html manual.
+        If pdftex is also in your path, then you will also have
+        the ability to make pdf help files, but this is optional.
+
+        If you build --without-texinfo, then you may have 
+        to configure texinfo and pdftex yourself after 
+        installation, if you need them later.
+
+    EOS
+  end
 
 
   # needed to preserve executable permissions on files without shebangs
@@ -57,10 +66,14 @@ class R < Formula
       "--enable-R-shlib",
       "SED=/usr/bin/sed", # don't remember Homebrew's sed shim
       "--with-blas=-L#{Formula["openblas"].opt_lib} -lopenblas",
-      "--enable-prebuilt-html",
-      "--enable-lto"
+      "--enable-prebuilt-html"
+#      "--enable-lto"
     ]
 
+    if MacOS.version > :sierra
+      args << "--enable-lto"
+    end
+    
     ## blas linking flags
     ENV.append "LDFLAGS", "-L#{Formula["openblas"].opt_lib}"
 
@@ -90,22 +103,14 @@ class R < Formula
     end
 
     if build.with? "texinfo"
-      installinfopath = which("install-info", path = ORIGINAL_PATHS)
-      if installinfopath.nil?
-        odie "--texinfo option passed, but install-info not found in your PATH.  It is needed 
-        to make the manual.  Either remove --texinfo option to the brew install command
-        or add the path to install-info to your PATH environment variable."
-      end
-      args << "INSTALL_INFO=#{installinfopath}"
       pdftexpath = File.dirname(which("pdftex", path = ORIGINAL_PATHS))
-      
       if pdftexpath.nil?
-        opoo "--texinfo option passed, but pdftex not found in original PATH.  It is only 
+        opoo "--with-texinfo option passed, but pdftex not found in original PATH.  It is only 
         needed if you want to make pdf manuals, so these will not be made."
       else
         ENV.append_path "PATH", pdftexpath
-      end
-      
+        ohai "Found pdftex in #{pdftexpath}"
+      end      
     end
 
     # Help CRAN packages find gettext and readline
