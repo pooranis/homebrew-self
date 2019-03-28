@@ -105,7 +105,7 @@ class R < Formula
     if build.with? "texinfo"
       pdftexpath = File.dirname(which("pdftex", path = ORIGINAL_PATHS))
       if pdftexpath.nil?
-        opoo "--with-texinfo option passed, but pdftex not found in original PATH.  It is only 
+        opoo "Building with texinfo, but pdftex not found in original PATH.  It is only 
         needed if you want to make pdf manuals, so these will not be made."
       else
         ENV.append_path "PATH", pdftexpath
