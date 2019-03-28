@@ -35,7 +35,7 @@ class R < Formula
 
         If you build --without-texinfo, then you may have 
         to configure texinfo and pdftex yourself after 
-        installation, if you need them later.
+        installation if you need them later.
 
     EOS
   end
