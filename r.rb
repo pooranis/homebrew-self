@@ -18,8 +18,8 @@ class R < Formula
   depends_on "openblas"
   depends_on "libtiff" => :recommended
   depends_on "llvm" => :optional
-  depends_on "pango" => :optional
   option "with-pango", "Pango support is only available if also building --with-cairo."
+  depends_on "pango" => :optional
   depends_on "cairo" => :optional
   depends_on :java => :optional
   
