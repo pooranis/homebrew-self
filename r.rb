@@ -102,18 +102,19 @@ class R < Formula
         "OBJC=#{Formula["llvm"].opt_bin}/clang"
       ]
     end
-
+    
     if build.with? "texinfo"
-      pdftexpath = File.dirname(which("pdflatex", path = ORIGINAL_PATHS))
+      pdftexpath = which("pdflatex", path = ORIGINAL_PATHS)
       if pdftexpath.nil?
         opoo "Building with texinfo, but pdflatex not found in original PATH.  It is only 
         needed if you want to make pdf manuals, so these will not be made."
       else
+        pdftexpath = File.dirname(pdftexpath)
         ENV.append_path "PATH", pdftexpath
         ohai "Found pdflatex in #{pdftexpath}"
-      end      
+      end          
     end
-
+    
     # Help CRAN packages find gettext and readline
     ["gettext", "readline"].each do |f|
       ENV.append "CPPFLAGS", "-I#{Formula[f].opt_include}"
