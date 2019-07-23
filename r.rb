@@ -67,7 +67,6 @@ class R < Formula
       "--enable-R-shlib",
       "SED=/usr/bin/sed", # don't remember Homebrew's sed shim
       "--with-blas=-L#{Formula["openblas"].opt_lib} -lopenblas",
-      "--enable-prebuilt-html"
 #      "--enable-lto"
     ]
 
