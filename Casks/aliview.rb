@@ -8,4 +8,6 @@ cask 'aliview' do
   homepage 'https://ormbunkar.se/aliview/'
 
   app "AliView-#{version}/AliView.app"
+
+  zap trash: '~/.AliView'
 end
