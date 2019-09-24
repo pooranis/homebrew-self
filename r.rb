@@ -67,13 +67,13 @@ class R < Formula
       "--enable-R-shlib",
       "SED=/usr/bin/sed", # don't remember Homebrew's sed shim
       "--with-blas=-L#{Formula["openblas"].opt_lib} -lopenblas",
-#      "--enable-lto"
     ]
 
-    if MacOS.version > :sierra
-      args << "--enable-lto"
-    end
-    
+    ## Get error with this - dyld: Symbol not found: _R_tzname
+    # if MacOS.version > :sierra
+    #   args << "--enable-lto"
+    # end
+
     ## blas linking flags
     ENV.append "LDFLAGS", "-L#{Formula["openblas"].opt_lib}"
 
