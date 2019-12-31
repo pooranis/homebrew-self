@@ -1,8 +1,8 @@
 class R < Formula
   desc "Software environment for statistical computing"
   homepage "https://www.r-project.org/"
-  url "https://cran.r-project.org/src/base/R-3/R-3.6.1.tar.gz"
-  sha256 "5baa9ebd3e71acecdcc3da31d9042fb174d55a42829f8315f2457080978b1389"
+  url "https://cran.r-project.org/src/base/R-3/R-3.6.2.tar.gz"
+  sha256 "bd65a45cddfb88f37370fbcee4ac8dd3f1aebeebe47c2f968fd9770ba2bbc954"
 
   ## See https://github.com/sethrfore/homebrew-r-srf
   ## and https://github.com/adamhsparks/setup_macOS_for_R for help as well
@@ -22,7 +22,7 @@ class R < Formula
   depends_on "pango" => :optional
   depends_on "cairo" => :optional
   depends_on :java => :optional
-  
+
   ## to build manuals
   option "without-texinfo", "Don't build html manual with texinfo."
   depends_on "texinfo" => :recommended
@@ -33,8 +33,8 @@ class R < Formula
         If pdftex is also in your path, then you will also have
         the ability to make pdf help files, but this is optional.
 
-        If you build --without-texinfo, then you may have 
-        to configure texinfo and pdftex yourself after 
+        If you build --without-texinfo, then you may have
+        to configure texinfo and pdftex yourself after
         installation if you need them later.
 
     EOS
@@ -95,25 +95,27 @@ class R < Formula
       ENV.prepend_path "PATH", "#{Formula["llvm"].opt_bin}"
       ENV.append "LDFLAGS", "-L#{Formula["llvm"].opt_lib} -Wl,-rpath,#{Formula["llvm"].opt_lib}"
       ENV.append "CPPFLAGS", "-I#{Formula["llvm"].opt_include}"
+      ENV.append_path "CPATH", "#{ENV["HOMEBREW_ISYSTEM_PATHS"}"
+
       args += [
         "CC=#{Formula["llvm"].opt_bin}/clang",
         "CXX=#{Formula["llvm"].opt_bin}/clang++",
         "OBJC=#{Formula["llvm"].opt_bin}/clang"
       ]
     end
-    
+
     if build.with? "texinfo"
       pdftexpath = which("pdflatex", path = ORIGINAL_PATHS)
       if pdftexpath.nil?
-        opoo "Building with texinfo, but pdflatex not found in original PATH.  It is only 
+        opoo "Building with texinfo, but pdflatex not found in original PATH.  It is only
         needed if you want to make pdf manuals, so these will not be made."
       else
         pdftexpath = File.dirname(pdftexpath)
         ENV.append_path "PATH", pdftexpath
         ohai "Found pdflatex in #{pdftexpath}"
-      end          
+      end
     end
-    
+
     # Help CRAN packages find gettext and readline
     ["gettext", "readline"].each do |f|
       ENV.append "CPPFLAGS", "-I#{Formula[f].opt_include}"
