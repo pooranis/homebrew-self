@@ -22,20 +22,26 @@ class R < Formula
   depends_on "pango" => :optional
   depends_on "cairo" => :optional
   depends_on :java => :optional
-
+  option "with-tcltk", "Build with tcl tk support."
   ## to build manuals
   option "without-texinfo", "Don't build html manual with texinfo."
   depends_on "texinfo" => :recommended
 
   def caveats
     <<~EOS
+        TEXINFO
         By default, texinfo is used to build the html manual.
         If pdftex is also in your path, then you will also have
         the ability to make pdf help files, but this is optional.
 
-        If you build --without-texinfo, then you may have
-        to configure texinfo and pdftex yourself after
+        If you build --without-texinfo, then you may have 
+        to configure texinfo and pdftex yourself after 
         installation if you need them later.
+
+        Tcl/Tk
+        Building --with-tcltk will look for ActiveTcl/Tk.  If needed,
+        you can install ActiveTcl with:
+        brew cask install tcl
 
     EOS
   end
@@ -95,7 +101,7 @@ class R < Formula
       ENV.prepend_path "PATH", "#{Formula["llvm"].opt_bin}"
       ENV.append "LDFLAGS", "-L#{Formula["llvm"].opt_lib} -Wl,-rpath,#{Formula["llvm"].opt_lib}"
       ENV.append "CPPFLAGS", "-I#{Formula["llvm"].opt_include}"
-      ENV.append_path "CPATH", "#{ENV["HOMEBREW_ISYSTEM_PATHS"}"
+      ENV.append_path "CPATH", "#{ENV["HOMEBREW_ISYSTEM_PATHS"]}"
 
       args += [
         "CC=#{Formula["llvm"].opt_bin}/clang",
@@ -116,6 +122,27 @@ class R < Formula
       end
     end
 
+
+    if build.with? "tcltk"
+      tclpath=Pathname.new("/Library/Frameworks/Tcl.framework/tclConfig.sh")
+      tkpath=Pathname.new("/Library/Frameworks/Tk.framework/tkConfig.sh")
+      if not tclpath.exist?
+        odie "Cannot find #{tclpath}.  Please install R without tcltk option or install
+        ActiveTcl:
+        brew cask install tcl"
+      end
+      if not tkpath.exist?
+        odie "Cannot find #{tkpath}.Please install R without tcltk option or install
+        ActiveTcl:
+        brew cask install tcl"
+      end
+      ohai "Found ActiveTcl configs #{tclpath} and #{tkpath}."
+      args += [
+        "--with-tcl-config=#{tclpath}",
+        "--with-tk-config=#{tkpath}"
+      ]
+    end
+    
     # Help CRAN packages find gettext and readline
     ["gettext", "readline"].each do |f|
       ENV.append "CPPFLAGS", "-I#{Formula[f].opt_include}"
