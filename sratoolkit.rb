@@ -13,7 +13,6 @@ class Sratoolkit < Formula
   end
 
   depends_on "libmagic"
-  depends_on "brewsci/bio/ascp" => :optional
 
   uses_from_macos "libxml2"
   uses_from_macos "perl"
@@ -29,6 +28,7 @@ class Sratoolkit < Formula
   end
 
   def install
+    ENV.deparallelize
     ngs_sdk_prefix = buildpath/"ngs-sdk-prefix"
     resource("ngs-sdk").stage do
       cd "ngs-sdk" do
@@ -42,18 +42,23 @@ class Sratoolkit < Formula
 
     ncbi_vdb_source = buildpath/"ncbi-vdb-source"
     ncbi_vdb_build = buildpath/"ncbi-vdb-build"
+    ncbi_vdb_prefix = buildpath/"ncbi-vdb-prefix"
+    mkdir "#{ncbi_vdb_prefix}"
+    mkdir "#{ncbi_vdb_build}"
     ncbi_vdb_source.install resource("ncbi-vdb")
     cd ncbi_vdb_source do
       system "./configure",
         "--prefix=#{buildpath/"ncbi-vdb-prefix"}",
         "--with-ngs-sdk-prefix=#{ngs_sdk_prefix}",
         "--build=#{ncbi_vdb_build}"
-      ENV.deparallelize { system "make" }
+       system "make"
     end
 
     # Fix the error: ld: library not found for -lmagic-static
     # Upstream PR: https://github.com/ncbi/sra-tools/pull/105
     inreplace "tools/copycat/Makefile", "-smagic-static", "-smagic"
+
+    ofail "fooey!"
 
     system "./configure",
       "--prefix=#{prefix}",
