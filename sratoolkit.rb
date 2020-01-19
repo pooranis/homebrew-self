@@ -58,8 +58,6 @@ class Sratoolkit < Formula
     # Upstream PR: https://github.com/ncbi/sra-tools/pull/105
     inreplace "tools/copycat/Makefile", "-smagic-static", "-smagic"
 
-    ofail "fooey!"
-
     system "./configure",
       "--prefix=#{prefix}",
       "--with-ngs-sdk-prefix=#{ngs_sdk_prefix}",
