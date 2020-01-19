@@ -12,9 +12,9 @@ class Sratoolkit < Formula
     sha256 "3dc2db39ac207dc8ba786ba808105cba4128cc9cb5573a02c28e9a71208886c9" => :high_sierra
   end
 
-  depends_on "hdf5"
   depends_on "libmagic"
   depends_on "brewsci/bio/ascp" => :optional
+make
   uses_from_macos "libxml2"
   uses_from_macos "perl"
 
