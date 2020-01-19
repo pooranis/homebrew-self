@@ -5,13 +5,7 @@ class Sratoolkit < Formula
   sha256 "e8f95d5c68528bbb9ea1a817d3a20115c63a6f8ce28b814fbd78a88bbdcf5524"
   head "https://github.com/ncbi/sra-tools.git"
 
-  bottle do
-    cellar :any_skip_relocation
-    sha256 "5666b45a693e675a145503ee348aa9be199b6dd53d8e3582e6a2af2f4f647b94" => :catalina
-    sha256 "8d9a22d8cc446e66d66b44e8d8e2bbdf60faaa9cc8166e9c7cad1dd5e98abf8b" => :mojave
-    sha256 "3dc2db39ac207dc8ba786ba808105cba4128cc9cb5573a02c28e9a71208886c9" => :high_sierra
-  end
-
+#  depends_on "hdf5"
   depends_on "libmagic"
 
   uses_from_macos "libxml2"
@@ -29,6 +23,8 @@ class Sratoolkit < Formula
 
   def install
     ENV.deparallelize
+
+    ## build ngs/ngs-sdk
     ngs_sdk_prefix = buildpath/"ngs-sdk-prefix"
     resource("ngs-sdk").stage do
       cd "ngs-sdk" do
@@ -40,6 +36,7 @@ class Sratoolkit < Formula
       end
     end
 
+    ## build ncbi-vdb
     ncbi_vdb_source = buildpath/"ncbi-vdb-source"
     ncbi_vdb_build = buildpath/"ncbi-vdb-build"
     ncbi_vdb_prefix = buildpath/"ncbi-vdb-prefix"
@@ -48,12 +45,14 @@ class Sratoolkit < Formula
     ncbi_vdb_source.install resource("ncbi-vdb")
     cd ncbi_vdb_source do
       system "./configure",
-        "--prefix=#{buildpath/"ncbi-vdb-prefix"}",
-        "--with-ngs-sdk-prefix=#{ngs_sdk_prefix}",
-        "--build=#{ncbi_vdb_build}"
-       system "make"
+             "--prefix=#{buildpath/"ncbi-vdb-prefix"}",
+             "--with-ngs-sdk-prefix=#{ngs_sdk_prefix}",
+             "--build=#{ncbi_vdb_build}"
+      ENV.deparallelize { system "make" }
     end
 
+
+    ## build sra-tools
     # Fix the error: ld: library not found for -lmagic-static
     # Upstream PR: https://github.com/ncbi/sra-tools/pull/105
     inreplace "tools/copycat/Makefile", "-smagic-static", "-smagic"
