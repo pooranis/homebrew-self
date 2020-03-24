@@ -4,12 +4,12 @@
 class Cpdf < Formula
   desc "The Coherent PDF Command Line Tools allow you to manipulate existing PDF files in a variety of ways.  Free for non-commercial, private, personal use.  See homepage for more information."
   homepage "https://community.coherentpdf.com/"
-  url "https://github.com/coherentgraphics/cpdf-binaries/archive/master.zip"
-  version "v2.2-patchlevel1"
-  sha256 "fd5c7c3cd46627a187e19906b5b4876eb4ace594a663f9f018ffab02216f8216"
+  version "v2.3.1"
+  url "https://github.com/coherentgraphics/cpdf-binaries/archive/#{version}.zip"
+  sha256 "3ad7ba576e16582e1f8e0a2a8a9869bf1ce912162dbf8e6d59f123ad6209af22"
 
   def install
-    bin.install "OSX-Intel/cpdf"
+    bin.install "OSX-Intel/Notarized/cpdf"
   end
 
 end
