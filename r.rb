@@ -109,7 +109,7 @@ class R < Formula
       pdftexpath = which("pdflatex", path = ORIGINAL_PATHS)
       if pdftexpath.nil?
         opoo "Building with texinfo, but pdflatex not found in original PATH.  It is only
-        needed if you want to make pdf manuals, so these will not be made."
+        needed if you want to make pdf manuals."
       else
         pdftexpath = File.dirname(pdftexpath)
         ENV.append_path "PATH", pdftexpath
