@@ -1,8 +1,8 @@
 class R < Formula
   desc "Software environment for statistical computing"
   homepage "https://www.r-project.org/"
-  url "https://cran.r-project.org/src/base/R-3/R-3.6.3.tar.gz"
-  sha256 "89302990d8e8add536e12125ec591d6951022cf8475861b3690bc8bf1cefaa8f"
+  url "https://cran.r-project.org/src/base/R-4/R-4.0.0.tar.gz"
+  sha256 "06beb0291b569978484eb0dcb5d2339665ec745737bdfb4e873e7a5a75492940"
 
   ## See https://github.com/sethrfore/homebrew-r-srf
   ## and https://github.com/adamhsparks/setup_macOS_for_R for help as well
@@ -12,7 +12,7 @@ class R < Formula
   depends_on "gettext"
   depends_on "jpeg"
   depends_on "libpng"
-  depends_on "pcre"
+  depends_on "pcre2"
   depends_on "readline"
   depends_on "xz"
   depends_on "openblas"
@@ -48,13 +48,13 @@ class R < Formula
 
 
   # needed to preserve executable permissions on files without shebangs
-  skip_clean "lib/R/bin"
+  skip_clean "lib/R/bin", "lib/R/doc"
 
   ## needed for testing
   resource "gss" do
-    url "https://cloud.r-project.org/src/contrib/gss_2.1-12.tar.gz", :using => :nounzip
-    mirror "https://mirror.las.iastate.edu/CRAN/src/contrib/gss_2.1-12.tar.gz"
-    sha256 "bcc92bb621671dbf94684e11a0b1c2b6c423f57d7d4ed8c7eeba4f4e51ef170b"
+    url "https://cloud.r-project.org/src/contrib/gss_2.2-0.tar.gz", :using => :nounzip
+    mirror "https://mirror.las.iastate.edu/CRAN/src/contrib/gss_2.2-0.tar.gz"
+    sha256 "3436f3cedd877e232a5dda99fe7f22ea217a0553d6da5c06c002be57f0790e36"
   end
 
   def install
@@ -192,8 +192,8 @@ class R < Formula
     ln_s site_library, lib/"R/site-library"
 
     ## change permissions on html directory
-    html_doc = lib/"R/doc/html"
-    system "chmod", "-R", "gu+w", html_doc
+    # html_doc = lib/"R/doc/html"
+    # system "chmod", "-R", "gu+w", html_doc
   end
 
   test do
