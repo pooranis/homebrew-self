@@ -17,10 +17,10 @@ class R < Formula
   depends_on "xz"
   depends_on "openblas"
   depends_on "libtiff" => :recommended
-  depends_on "llvm" => :optional
-  option "with-pango", "Pango support is only available if also building --with-cairo."
-  depends_on "pango" => :optional
-  depends_on "cairo" => :optional
+  depends_on "llvm" => :recommended
+  option "without-pango", "Pango support is only available if also building with cairo."
+  depends_on "pango" => :recommended
+  depends_on "cairo" => :recommended
   depends_on :java => :optional
   option "with-tcltk", "Build with tcl tk support."
   ## to build manuals
