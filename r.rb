@@ -1,8 +1,8 @@
 class R < Formula
   desc "Software environment for statistical computing"
   homepage "https://www.r-project.org/"
-  url "https://cran.r-project.org/src/base/R-4/R-4.0.0.tar.gz"
-  sha256 "06beb0291b569978484eb0dcb5d2339665ec745737bdfb4e873e7a5a75492940"
+  url "https://cran.r-project.org/src/base/R-4/R-4.0.2.tar.gz"
+  sha256 "d3bceab364da0876625e4097808b42512395fdf41292f4915ab1fd257c1bbe75"
 
   ## See https://github.com/sethrfore/homebrew-r-srf
   ## and https://github.com/adamhsparks/setup_macOS_for_R for help as well
@@ -175,6 +175,8 @@ class R < Formula
     # avoid triggering mandatory rebuilds of r when gcc is upgraded
     inreplace lib/"R/etc/Makeconf", Formula["gcc"].prefix.realpath,
                                     Formula["gcc"].opt_prefix
+    inreplace lib/"R/etc/Makeconf", Formula["pcre2"].prefix.realpath,
+                                    Formula["pcre2"].opt_prefix
   end
 
   def post_install
