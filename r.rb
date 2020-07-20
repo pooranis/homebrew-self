@@ -22,9 +22,13 @@ class R < Formula
   depends_on "pango" => :recommended
   depends_on "cairo" => :recommended
   depends_on :java => :optional
-  option "with-tcltk", "Build with tcl tk support."
+  option "with-tcltk", "Build with tcl tk support. Requires ActiveTcl/Tk installed.
+        If needed, you can install ActiveTcl with:
+        brew cask install tcl"
   ## to build manuals
-  option "without-texinfo", "Don't build html manual with texinfo."
+  option "without-texinfo", "Don't build html manual with texinfo. You may have
+        to configure texinfo and pdftex yourself after
+        installation if you need them later."
   depends_on "texinfo" => :recommended
 
   def caveats
@@ -33,15 +37,6 @@ class R < Formula
         By default, texinfo is used to build the html manual.
         If pdftex is also in your path, then you will also have
         the ability to make pdf help files, but this is optional.
-
-        If you build --without-texinfo, then you may have
-        to configure texinfo and pdftex yourself after
-        installation if you need them later.
-
-        Tcl/Tk
-        Building --with-tcltk will look for ActiveTcl/Tk.  If needed,
-        you can install ActiveTcl with:
-        brew cask install tcl
 
     EOS
   end
@@ -65,11 +60,11 @@ class R < Formula
       "--with-lapack",
       "--enable-R-shlib",
       "SED=/usr/bin/sed", # don't remember Homebrew's sed shim
-      "--with-blas=-L#{Formula["openblas"].opt_lib} -lopenblas",
+      "--with-blas=-L#{Formula["openblas"].opt_lib} -lopenblas"
     ]
 
-    ## blas linking flags
-    ENV.append "LDFLAGS", "-L#{Formula["openblas"].opt_lib}"
+    # Help CRAN packages find readline
+    flags = ["readline"]
 
     if build.with? "java"
       args << "--enable-java"
@@ -78,7 +73,6 @@ class R < Formula
     end
 
     if build.with? "cairo"
-      args << "--with-cairo"
       # Fix cairo detection with Quartz-only cairo
       inreplace ["configure", "m4/cairo.m4"], "cairo-xlib.h", "cairo.h"
     else
@@ -87,14 +81,15 @@ class R < Formula
 
     if build.with? "llvm"
       ENV.prepend_path "PATH", "#{Formula["llvm"].opt_bin}"
-      ENV.append "LDFLAGS", "-L#{Formula["llvm"].opt_lib} -Wl,-rpath,#{Formula["llvm"].opt_lib}"
-      ENV.append "CPPFLAGS", "-I#{Formula["llvm"].opt_include}"
-      ENV.append_path "CPATH", "#{ENV["HOMEBREW_ISYSTEM_PATHS"]}"
+      ENV["CPATH"] = "#{ENV["HOMEBREW_ISYSTEM_PATHS"]}"
+      flags << "llvm"
 
+      ## dangerous to comment out; relying on .Renviron to contain clang in path!
       args += [
         "CC=#{Formula["llvm"].opt_bin}/clang",
         "CXX=#{Formula["llvm"].opt_bin}/clang++",
-        "OBJC=#{Formula["llvm"].opt_bin}/clang"
+        "OBJC=#{Formula["llvm"].opt_bin}/clang",
+        "OBJCXX=#{Formula["llvm"].opt_bin}/clang++"
       ]
     end
 
@@ -104,12 +99,11 @@ class R < Formula
         opoo "Building with texinfo, but pdflatex not found in original PATH.  It is only
         needed if you want to make pdf manuals."
       else
-        pdftexpath = File.dirname(pdftexpath)
+        pdftexpath = File.dirname(File.realpath(pdftexpath))
         ENV.append_path "PATH", pdftexpath
         ohai "Found pdflatex in #{pdftexpath}"
       end
     end
-
 
     if build.with? "tcltk"
       tclpath=Pathname.new("/Library/Frameworks/Tcl.framework/tclConfig.sh")
@@ -129,17 +123,19 @@ class R < Formula
         "--with-tcl-config=#{tclpath}",
         "--with-tk-config=#{tkpath}"
       ]
+    else
+      args << "--without-tcltk"
     end
 
-    # Help CRAN packages find gettext and readline
-    ["gettext", "readline"].each do |f|
+    # Help CRAN packages find keg-only libs
+    flags.each do |f|
       ENV.append "CPPFLAGS", "-I#{Formula[f].opt_include}"
       ENV.append "LDFLAGS", "-L#{Formula[f].opt_lib}"
     end
 
     system "./configure", *args
-    system "make"
 #    ENV.deparallelize do
+      system "make"
       system "make", "install"
 #    end
 
@@ -186,9 +182,6 @@ class R < Formula
     site_library.mkpath
     ln_s site_library, lib/"R/site-library"
 
-    ## change permissions on html directory
-    # html_doc = lib/"R/doc/html"
-    # system "chmod", "-R", "gu+w", html_doc
   end
 
   test do
