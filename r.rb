@@ -63,8 +63,8 @@ class R < Formula
       "--with-blas=-L#{Formula["openblas"].opt_lib} -lopenblas"
     ]
 
-    # Help CRAN packages find readline
-    flags = ["readline"]
+    ## homebrewlibs
+    hlibs = ['readline']
 
     if build.with? "java"
       args << "--enable-java"
@@ -81,8 +81,8 @@ class R < Formula
 
     if build.with? "llvm"
       ENV.prepend_path "PATH", "#{Formula["llvm"].opt_bin}"
-      ENV["CPATH"] = "#{ENV["HOMEBREW_ISYSTEM_PATHS"]}"
-      flags << "llvm"
+      ENV["CPATH"] = "#{Formula["openblas"].opt_include}:#{HOMEBREW_PREFIX}/include"
+      hlibs << "llvm"
 
       ## dangerous to comment out; relying on .Renviron to contain clang in path!
       args += [
@@ -127,8 +127,8 @@ class R < Formula
       args << "--without-tcltk"
     end
 
-    # Help CRAN packages find keg-only libs
-    flags.each do |f|
+    # Help packages find homebrew libs
+    hlibs.each do |f|
       ENV.append "CPPFLAGS", "-I#{Formula[f].opt_include}"
       ENV.append "LDFLAGS", "-L#{Formula[f].opt_lib}"
     end
@@ -158,7 +158,7 @@ class R < Formula
 
     r_home = lib/"R"
 
-    # make Homebrew packages discoverable for R CMD INSTALL
+    # make Homebrew packages discoverable for R CMD INSTALL for /usr/local
     inreplace r_home/"etc/Makeconf" do |s|
       s.gsub!(/^CPPFLAGS =.*/, "\\0 -I#{HOMEBREW_PREFIX}/include")
       s.gsub!(/^LDFLAGS =.*/, "\\0 -L#{HOMEBREW_PREFIX}/lib")
@@ -171,8 +171,7 @@ class R < Formula
     # avoid triggering mandatory rebuilds of r when gcc is upgraded
     inreplace lib/"R/etc/Makeconf", Formula["gcc"].prefix.realpath,
                                     Formula["gcc"].opt_prefix
-    inreplace lib/"R/etc/Makeconf", Formula["pcre2"].prefix.realpath,
-                                    Formula["pcre2"].opt_prefix
+
   end
 
   def post_install
@@ -181,14 +180,13 @@ class R < Formula
     site_library = HOMEBREW_PREFIX/"lib/R/#{short_version}/site-library"
     site_library.mkpath
     ln_s site_library, lib/"R/site-library"
-
   end
 
   test do
     assert_equal "[1] 2", shell_output("#{bin}/Rscript -e 'print(1+1)'").chomp
     assert_equal ".dylib", shell_output("#{bin}/R CMD config DYLIB_EXT").chomp
 
-    system bin/"Rscript -e \'install.packages(\"gss\", \".\", \"https://cloud.r-project.org\")\'"
+    system bin/"Rscript", "-e", "install.packages('gss', '.', 'https://cloud.r-project.org')"
     assert_predicate testpath/"gss/libs/gss.so", :exist?,
                      "Failed to install gss package"
   end
