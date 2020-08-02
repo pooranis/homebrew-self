@@ -21,6 +21,8 @@ class R < Formula
   option "without-pango", "Pango support is only available if also building with cairo."
   depends_on "pango" => :recommended
   depends_on "cairo" => :recommended
+
+  ## stuff we don't use
   depends_on :java => :optional
   option "with-tcltk", "Build with tcl tk support. Requires ActiveTcl/Tk installed.
         If needed, you can install ActiveTcl with:
@@ -63,7 +65,7 @@ class R < Formula
       "--with-blas=-L#{Formula["openblas"].opt_lib} -lopenblas"
     ]
 
-    ## homebrewlibs
+    ## homebrewlibs keg-only dependencies besides BLAS
     hlibs = ['readline']
 
     if build.with? "java"
@@ -74,17 +76,17 @@ class R < Formula
 
     if build.with? "cairo"
       # Fix cairo detection with Quartz-only cairo
-      inreplace ["configure", "m4/cairo.m4"], "cairo-xlib.h", "cairo.h"
+      inreplace ["configure", "m4/cairo.m4"], "cairo-xlib.h", "cairo-quartz.h"
     else
       args << "--without-cairo"
     end
 
     if build.with? "llvm"
       ENV.prepend_path "PATH", "#{Formula["llvm"].opt_bin}"
-      ENV["CPATH"] = "#{Formula["openblas"].opt_include}:#{HOMEBREW_PREFIX}/include"
+      ENV.prepend_path "CPATH", "#{ENV["HOMEBREW_INCLUDE_PATHS"]}:#{HOMEBREW_PREFIX}/include"
+      ENV.prepend_path "LIBRARY_PATH", "#{ENV["HOMEBREW_LIBRARY_PATHS"]}"
       hlibs << "llvm"
 
-      ## dangerous to comment out; relying on .Renviron to contain clang in path!
       args += [
         "CC=#{Formula["llvm"].opt_bin}/clang",
         "CXX=#{Formula["llvm"].opt_bin}/clang++",
@@ -127,7 +129,7 @@ class R < Formula
       args << "--without-tcltk"
     end
 
-    # Help packages find homebrew libs
+    # Help packages find keg-only homebrew libs
     hlibs.each do |f|
       ENV.append "CPPFLAGS", "-I#{Formula[f].opt_include}"
       ENV.append "LDFLAGS", "-L#{Formula[f].opt_lib}"
@@ -158,7 +160,7 @@ class R < Formula
 
     r_home = lib/"R"
 
-    # make Homebrew packages discoverable for R CMD INSTALL for /usr/local
+    # make linked Homebrew packages discoverable for R CMD INSTALL for /usr/local
     inreplace r_home/"etc/Makeconf" do |s|
       s.gsub!(/^CPPFLAGS =.*/, "\\0 -I#{HOMEBREW_PREFIX}/include")
       s.gsub!(/^LDFLAGS =.*/, "\\0 -L#{HOMEBREW_PREFIX}/lib")
@@ -171,7 +173,8 @@ class R < Formula
     # avoid triggering mandatory rebuilds of r when gcc is upgraded
     inreplace lib/"R/etc/Makeconf", Formula["gcc"].prefix.realpath,
                                     Formula["gcc"].opt_prefix
-
+    inreplace lib/"R/etc/Makeconf", Formula["pcre2"].prefix.realpath,
+                                    Formula["pcre2"].opt_prefix
   end
 
   def post_install
