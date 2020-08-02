@@ -91,7 +91,8 @@ class R < Formula
         "CC=#{Formula["llvm"].opt_bin}/clang",
         "CXX=#{Formula["llvm"].opt_bin}/clang++",
         "OBJC=#{Formula["llvm"].opt_bin}/clang",
-        "OBJCXX=#{Formula["llvm"].opt_bin}/clang++"
+        "OBJCXX=#{Formula["llvm"].opt_bin}/clang++",
+        "SHLIB_OPENMP_FCFLAGS=-fopenmp"
       ]
     end
 
