@@ -1,8 +1,8 @@
 class R < Formula
   desc "Software environment for statistical computing"
   homepage "https://www.r-project.org/"
-  url "https://cran.r-project.org/src/base/R-4/R-4.0.2.tar.gz"
-  sha256 "d3bceab364da0876625e4097808b42512395fdf41292f4915ab1fd257c1bbe75"
+  url "https://cran.r-project.org/src/base/R-4/R-4.0.3.tar.gz"
+  sha256 "09983a8a78d5fb6bc45d27b1c55f9ba5265f78fa54a55c13ae691f87c5bb9e0d"
 
   ## See https://github.com/sethrfore/homebrew-r-srf
   ## and https://github.com/adamhsparks/setup_macOS_for_R for help as well
@@ -21,24 +21,26 @@ class R < Formula
   option "without-pango", "Pango support is only available if also building with cairo."
   depends_on "pango" => :recommended
   depends_on "cairo" => :recommended
+  depends_on "texinfo" => :recommended
 
   ## stuff we don't use
   depends_on :java => :optional
-  option "with-tcltk", "Build with tcl tk support. Requires ActiveTcl/Tk installed.
-        If needed, you can install ActiveTcl with:
+  option "with-tcltk", "Build with tcl tk support. Requires ActiveTcl/Tk installed:
         brew cask install tcl"
-  ## to build manuals
-  option "without-texinfo", "Don't build html manual with texinfo. You may have
-        to configure texinfo and pdftex yourself after
-        installation if you need them later."
-  depends_on "texinfo" => :recommended
+
+
 
   def caveats
     <<~EOS
         TEXINFO
-        By default, texinfo is used to build the html manual.
+        Texinfo is used to build the html manual.
         If pdftex is also in your path, then you will also have
-        the ability to make pdf help files, but this is optional.
+        the ability to make pdf help files.
+
+        LLVM/OpenMP
+        Using homebrew llvm allows for OpenMP.  There may be problems in installing packages
+        if you ALSO have libomp installed.  Should unlink before installing:
+        brew unlink libomp
 
     EOS
   end
@@ -66,7 +68,9 @@ class R < Formula
     ]
 
     ## homebrewlibs keg-only dependencies besides BLAS
-    hlibs = ['readline']
+    ENV.append "CPPFLAGS", "-I#{Formula["readline"].opt_include}"
+    ENV.append "LDFLAGS", "-L#{Formula["readline"].opt_lib}"
+
 
     if build.with? "java"
       args << "--enable-java"
@@ -83,16 +87,15 @@ class R < Formula
 
     if build.with? "llvm"
       ENV.prepend_path "PATH", "#{Formula["llvm"].opt_bin}"
-      ENV.prepend_path "CPATH", "#{ENV["HOMEBREW_INCLUDE_PATHS"]}:#{HOMEBREW_PREFIX}/include"
+      ENV.prepend_path "CPATH", "#{HOMEBREW_PREFIX}/include"
       ENV.prepend_path "LIBRARY_PATH", "#{ENV["HOMEBREW_LIBRARY_PATHS"]}"
-      hlibs << "llvm"
+      ENV.prepend "LDFLAGS", "-L#{Formula["llvm"].opt_lib}"
 
       args += [
         "CC=#{Formula["llvm"].opt_bin}/clang",
         "CXX=#{Formula["llvm"].opt_bin}/clang++",
         "OBJC=#{Formula["llvm"].opt_bin}/clang",
-        "OBJCXX=#{Formula["llvm"].opt_bin}/clang++",
-        "SHLIB_OPENMP_FCFLAGS=-fopenmp"
+        "OBJCXX=#{Formula["llvm"].opt_bin}/clang++"
       ]
     end
 
@@ -128,12 +131,6 @@ class R < Formula
       ]
     else
       args << "--without-tcltk"
-    end
-
-    # Help packages find keg-only homebrew libs
-    hlibs.each do |f|
-      ENV.append "CPPFLAGS", "-I#{Formula[f].opt_include}"
-      ENV.append "LDFLAGS", "-L#{Formula[f].opt_lib}"
     end
 
     system "./configure", *args
