@@ -24,7 +24,7 @@ class R < Formula
   depends_on "texinfo" => :recommended
 
   ## stuff we don't use
-  depends_on :java => :optional
+  depends_on "openjdk" => :optional
   option "with-tcltk", "Build with tcl tk support. Requires ActiveTcl/Tk installed:
         brew cask install tcl"
 
