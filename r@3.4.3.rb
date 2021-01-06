@@ -3,6 +3,7 @@ class RAT343 < Formula
   homepage "https://www.r-project.org/"
   url "https://cran.rstudio.com/src/base/R-3/R-3.4.3.tar.gz"
   sha256 "7a3cb831de5b4151e1f890113ed207527b7d4b16df9ec6b35e0964170007f426"
+  deprecate! date: "2020-01-06", because: :versioned_formula:
 
   def pour_bottle?
     false
