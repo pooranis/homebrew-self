@@ -1,8 +1,15 @@
 class R < Formula
   desc "Software environment for statistical computing"
   homepage "https://www.r-project.org/"
-  url "https://cran.r-project.org/src/base/R-4/R-4.0.3.tar.gz"
-  sha256 "09983a8a78d5fb6bc45d27b1c55f9ba5265f78fa54a55c13ae691f87c5bb9e0d"
+  url "https://cran.r-project.org/src/base/R-4/R-4.0.5.tar.gz"
+  sha256 "0a3ee079aa772e131fe5435311ab627fcbccb5a50cabc54292e6f62046f1ffef"
+  license "GPL-2.0-or-later"
+
+  livecheck do
+    url "https://cran.rstudio.com/banner.shtml"
+    regex(%r{href=(?:["']?|.*?/)R[._-]v?(\d+(?:\.\d+)+)\.t}i)
+  end
+
 
   ## See https://github.com/sethrfore/homebrew-r-srf
   ## and https://github.com/adamhsparks/setup_macOS_for_R for help as well
@@ -12,10 +19,11 @@ class R < Formula
   depends_on "gettext"
   depends_on "jpeg"
   depends_on "libpng"
+  depends_on "openblas"
   depends_on "pcre2"
   depends_on "readline"
+  depends_on "tcl-tk"
   depends_on "xz"
-  depends_on "openblas"
   depends_on "libtiff" => :recommended
   depends_on "llvm" => :recommended
   option "without-pango", "Pango support is only available if also building with cairo."
@@ -25,10 +33,6 @@ class R < Formula
 
   ## stuff we don't use
   depends_on "openjdk" => :optional
-  option "with-tcltk", "Build with tcl tk support. Requires ActiveTcl/Tk installed:
-        brew cask install tcl"
-
-
 
   def caveats
     <<~EOS
@@ -50,26 +54,26 @@ class R < Formula
   skip_clean "lib/R/bin", "lib/R/doc"
 
   def install
-    # Fix dyld: lazy symbol binding failed: Symbol not found: _clock_gettime
-    if MacOS.version == "10.11" && MacOS::Xcode.installed? &&
-       MacOS::Xcode.version >= "8.0"
-      ENV["ac_cv_have_decl_clock_gettime"] = "no"
-    end
+    # BLAS detection fails with Xcode 12 due to missing prototype
+    # https://bugs.r-project.org/bugzilla/show_bug.cgi?id=18024
+    ENV.append "CFLAGS", "-Wno-implicit-function-declaration"
 
     args = [
       "--prefix=#{prefix}",
       "--enable-memory-profiling",
       "--without-x",
+      "--with-tcl-config=#{Formula["tcl-tk"].opt_lib}/tclConfig.sh",
+      "--with-tk-config=#{Formula["tcl-tk"].opt_lib}/tkConfig.sh",
       "--with-aqua",
       "--with-lapack",
       "--enable-R-shlib",
-      "SED=/usr/bin/sed", # don't remember Homebrew's sed shim
       "--with-blas=-L#{Formula["openblas"].opt_lib} -lopenblas"
     ]
 
-    ## homebrewlibs keg-only dependencies besides BLAS
-    ENV.append "CPPFLAGS", "-I#{Formula["readline"].opt_include}"
-    ENV.append "LDFLAGS", "-L#{Formula["readline"].opt_lib}"
+    # Help CRAN packages find gettext and readline
+    ["gettext", "readline", "xz"].each do |f|
+      ENV.append "CPPFLAGS", "-I#{Formula[f].opt_include}"
+      ENV.append "LDFLAGS", "-L#{Formula[f].opt_lib}"
 
 
     if build.with? "java"
@@ -111,27 +115,6 @@ class R < Formula
       end
     end
 
-    if build.with? "tcltk"
-      tclpath=Pathname.new("/Library/Frameworks/Tcl.framework/tclConfig.sh")
-      tkpath=Pathname.new("/Library/Frameworks/Tk.framework/tkConfig.sh")
-      if not tclpath.exist?
-        odie "Cannot find #{tclpath}.  Please install R without tcltk option or install
-        ActiveTcl:
-        brew cask install tcl"
-      end
-      if not tkpath.exist?
-        odie "Cannot find #{tkpath}.Please install R without tcltk option or install
-        ActiveTcl:
-        brew cask install tcl"
-      end
-      ohai "Found ActiveTcl configs #{tclpath} and #{tkpath}."
-      args += [
-        "--with-tcl-config=#{tclpath}",
-        "--with-tk-config=#{tkpath}"
-      ]
-    else
-      args << "--without-tcltk"
-    end
 
     system "./configure", *args
 #    ENV.deparallelize do
@@ -186,6 +169,8 @@ class R < Formula
   test do
     assert_equal "[1] 2", shell_output("#{bin}/Rscript -e 'print(1+1)'").chomp
     assert_equal ".dylib", shell_output("#{bin}/R CMD config DYLIB_EXT").chomp
+    assert_equal "[1] \"aqua\"",
+                 shell_output("#{bin}/Rscript -e 'library(tcltk)' -e 'tclvalue(.Tcl(\"tk windowingsystem\"))'").chomp
 
     system bin/"Rscript", "-e", "install.packages('gss', '.', 'https://cloud.r-project.org')"
     assert_predicate testpath/"gss/libs/gss.so", :exist?,
