@@ -22,7 +22,7 @@ class R < Formula
   depends_on "openblas"
   depends_on "pcre2"
   depends_on "readline"
-  depends_on "tcl-tk"
+  depends_on "tcl-tk" => :optional
   depends_on "xz"
   depends_on "libtiff" => :recommended
   depends_on "llvm" => :recommended
@@ -54,27 +54,29 @@ class R < Formula
   skip_clean "lib/R/bin", "lib/R/doc"
 
   def install
-    # BLAS detection fails with Xcode 12 due to missing prototype
-    # https://bugs.r-project.org/bugzilla/show_bug.cgi?id=18024
-    ENV.append "CFLAGS", "-Wno-implicit-function-declaration"
 
     args = [
       "--prefix=#{prefix}",
       "--enable-memory-profiling",
       "--without-x",
-      "--with-tcl-config=#{Formula["tcl-tk"].opt_lib}/tclConfig.sh",
-      "--with-tk-config=#{Formula["tcl-tk"].opt_lib}/tkConfig.sh",
       "--with-aqua",
+      "--with-blas=-L#{Formula["openblas"].opt_lib} -lopenblas",
       "--with-lapack",
       "--enable-R-shlib",
-      "--with-blas=-L#{Formula["openblas"].opt_lib} -lopenblas"
+
     ]
 
-    # Help CRAN packages find gettext and readline
-    ["gettext", "readline", "xz"].each do |f|
-      ENV.append "CPPFLAGS", "-I#{Formula[f].opt_include}"
-      ENV.append "LDFLAGS", "-L#{Formula[f].opt_lib}"
 
+    ## homebrewlibs keg-only dependencies besides BLAS
+    ENV.append "CPPFLAGS", "-I#{Formula["readline"].opt_include}"
+    ENV.append "LDFLAGS", "-L#{Formula["readline"].opt_lib}"
+
+    if build.with? "tcl-tk"
+      args += [
+        "--with-tcl-config=#{Formula["tcl-tk"].opt_lib}/tclConfig.sh",
+        "--with-tk-config=#{Formula["tcl-tk"].opt_lib}/tkConfig.sh"
+      ]
+    end
 
     if build.with? "java"
       args << "--enable-java"
@@ -101,6 +103,11 @@ class R < Formula
         "OBJC=#{Formula["llvm"].opt_bin}/clang",
         "OBJCXX=#{Formula["llvm"].opt_bin}/clang++"
       ]
+    else
+      # BLAS detection fails with Xcode 12 due to missing prototype
+      # https://bugs.r-project.org/bugzilla/show_bug.cgi?id=18024
+      # unclear if needed for Apple Clang, but put it here anyway as upstream formula has it
+      ENV.append "CFLAGS", "-Wno-implicit-function-declaration"
     end
 
     if build.with? "texinfo"
@@ -169,8 +176,11 @@ class R < Formula
   test do
     assert_equal "[1] 2", shell_output("#{bin}/Rscript -e 'print(1+1)'").chomp
     assert_equal ".dylib", shell_output("#{bin}/R CMD config DYLIB_EXT").chomp
-    assert_equal "[1] \"aqua\"",
-                 shell_output("#{bin}/Rscript -e 'library(tcltk)' -e 'tclvalue(.Tcl(\"tk windowingsystem\"))'").chomp
+
+    if build.with? "tcl-tk"
+      assert_equal "[1] \"aqua\"",
+                   shell_output("#{bin}/Rscript -e 'library(tcltk)' -e 'tclvalue(.Tcl(\"tk windowingsystem\"))'").chomp
+    end
 
     system bin/"Rscript", "-e", "install.packages('gss', '.', 'https://cloud.r-project.org')"
     assert_predicate testpath/"gss/libs/gss.so", :exist?,
