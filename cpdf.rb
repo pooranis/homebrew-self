@@ -6,7 +6,7 @@ class Cpdf < Formula
   homepage "https://community.coherentpdf.com/"
   version "v2.4"
   url "https://github.com/coherentgraphics/cpdf-binaries/archive/#{version}.zip"
-  sha256 "0019dfc4b32d63c1392aa264aed2253c1e0c2fb09216f8e2cc269bbfb8bb49b5"
+  sha256 "b11748ebfc6de41a5638b1ee0a13c5ee21565a56a429f1dd5e9c603f7fe83346"
 
   def install
     bin.install "OSX-Intel/cpdf"
