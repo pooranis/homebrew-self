@@ -163,6 +163,11 @@ class R < Formula
                                     Formula["gcc"].opt_prefix
     inreplace lib/"R/etc/Makeconf", Formula["pcre2"].prefix.realpath,
                                     Formula["pcre2"].opt_prefix
+    if build.with? "tcl-tk"
+      inreplace lib/"R/etc/Makeconf", Formula["tcl-tk"].prefix.realpath,
+                Formula["tcl-tk"].opt_prefix
+    end
+
   end
 
   def post_install
