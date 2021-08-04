@@ -84,10 +84,8 @@ class R < Formula
       args << "--disable-java"
     end
 
-    if build.with? "cairo"
-      # Fix cairo detection with Quartz-only cairo
-      inreplace ["configure", "m4/cairo.m4"], "cairo-xlib.h", "cairo-quartz.h"
-    else
+
+    if build.without? "cairo"
       args << "--without-cairo"
     end
 
