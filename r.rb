@@ -24,6 +24,8 @@ class R < Formula
   depends_on "readline"
   depends_on "tcl-tk" => :optional
   depends_on "xz"
+  depends_on "libx11"
+  depends_on "libxt"
   depends_on "libtiff" => :recommended
   depends_on "llvm" => :recommended
   option "without-pango", "Pango support is only available if also building with cairo."
@@ -58,7 +60,6 @@ class R < Formula
     args = [
       "--prefix=#{prefix}",
       "--enable-memory-profiling",
-      "--without-x",
       "--with-aqua",
       "--with-blas=-L#{Formula["openblas"].opt_lib} -lopenblas",
       "--with-lapack",
