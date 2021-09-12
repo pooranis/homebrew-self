@@ -22,24 +22,32 @@ class R < Formula
   depends_on "openblas"
   depends_on "pcre2"
   depends_on "readline"
-  depends_on "tcl-tk" => :optional
   depends_on "xz"
-  depends_on "libx11"
-  depends_on "libxt"
-  depends_on "libtiff" => :recommended
+  ## icu4c is dep of cairo/pango, might as well use it
+  depends_on "icu4c"
+  depends_on "libtiff"
+  depends_on "pango"
+  depends_on "cairo"
+
+  uses_from_macos "curl"
+
   depends_on "llvm" => :recommended
-  option "without-pango", "Pango support is only available if also building with cairo."
-  depends_on "pango" => :recommended
-  depends_on "cairo" => :recommended
+  option "without-texinfo", "Build without texinfo support.  Only needed to build the html manual."
   depends_on "texinfo" => :recommended
+  option "without-x", "Build without X11 support."
+    ##x11 libs unclear if these are sufficient since others are installed with cairo
+  depends_on "libx11" if build.with? "x"
+  depends_on "libxt" if build.with? "x"
+  depends_on "libxmu" if build.with? "x"
 
   ## stuff we don't use
+  depends_on "tcl-tk" => :optional
   depends_on "openjdk" => :optional
+
 
   def caveats
     <<~EOS
         TEXINFO
-        Texinfo is used to build the html manual.
         If pdftex is also in your path, then you will also have
         the ability to make pdf help files.
 
@@ -48,9 +56,11 @@ class R < Formula
         if you ALSO have libomp installed.  Should unlink before installing:
         brew unlink libomp
 
+        X11
+        As of 9/2021, it appears Homebrew has add X11 libs and builds cairo with X11. Still need XQuartz.  Unclear how they interact...  libx* libs aren't needed if building --without-x
+
     EOS
   end
-
 
   # needed to preserve executable permissions on files without shebangs
   skip_clean "lib/R/bin", "lib/R/doc"
@@ -67,10 +77,11 @@ class R < Formula
 
     ]
 
-
     ## homebrewlibs keg-only dependencies besides BLAS
-    ENV.append "CPPFLAGS", "-I#{Formula["readline"].opt_include}"
-    ENV.append "LDFLAGS", "-L#{Formula["readline"].opt_lib}"
+    ["readline", "icu4c"].each do |f|
+      ENV.append "CPPFLAGS", "-I#{Formula[f].opt_include}"
+      ENV.append "LDFLAGS", "-L#{Formula[f].opt_lib}"
+    end
 
     if build.with? "tcl-tk"
       args += [
@@ -79,15 +90,21 @@ class R < Formula
       ]
     end
 
-    if build.with? "java"
+    if build.with? "openjdk"
       args << "--enable-java"
     else
       args << "--disable-java"
     end
 
-
-    if build.without? "cairo"
-      args << "--without-cairo"
+    if build.without? "x"
+      args << "--without-x"
+    else
+      ## have to use general /usr/local paths because they all have to be in the same place
+      ## i wish there was env variable to set with list of paths
+      args += [
+        "--x-includes=#{HOMEBREW_PREFIX}/include",
+        "--x-libraries=#{HOMEBREW_PREFIX}/lib"
+      ]
     end
 
     if build.with? "llvm"
@@ -180,6 +197,8 @@ class R < Formula
   test do
     assert_equal "[1] 2", shell_output("#{bin}/Rscript -e 'print(1+1)'").chomp
     assert_equal ".dylib", shell_output("#{bin}/R CMD config DYLIB_EXT").chomp
+
+    system bin/"Rscript", "-e", "if(!capabilities('cairo')) stop('cairo not available')"
 
     if build.with? "tcl-tk"
       assert_equal "[1] \"aqua\"",
