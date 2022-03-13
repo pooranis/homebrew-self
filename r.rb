@@ -1,8 +1,8 @@
 class R < Formula
   desc "Software environment for statistical computing"
   homepage "https://www.r-project.org/"
-  url "https://cran.r-project.org/src/base/R-4/R-4.1.1.tar.gz"
-  sha256 "515e03265752257d0b7036f380f82e42b46ed8473f54f25c7b67ed25bbbdd364"
+  url "https://cran.r-project.org/src/base/R-4/R-4.1.2.tar.gz"
+  sha256 "2036225e9f7207d4ce097e54972aecdaa8b40d7d9911cd26491fac5a0fab38af"
   license "GPL-2.0-or-later"
 
   livecheck do
@@ -14,7 +14,7 @@ class R < Formula
   ## See https://github.com/sethrfore/homebrew-r-srf
   ## and https://github.com/adamhsparks/setup_macOS_for_R for help as well
 
-  depends_on "pkg-config" => :build
+  depends_on "pkg-config"
   depends_on "gcc" # for gfortran
   depends_on "gettext"
   depends_on "jpeg"
@@ -23,18 +23,21 @@ class R < Formula
   depends_on "pcre2"
   depends_on "readline"
   depends_on "xz"
-  ## icu4c is dep of cairo/pango, might as well use it
-  depends_on "icu4c"
   depends_on "libtiff"
   depends_on "pango"
   depends_on "cairo"
+  # depends_on "libffi" llvm uses macos libffi
+  # depends_on "icu4c" this seems to be used even without dependency?
 
   uses_from_macos "curl"
+  uses_from_macos "libffi"
+  uses_from_macos "icu4c"
 
   depends_on "llvm" => :recommended
   option "without-texinfo", "Build without texinfo support.  Only needed to build the html manual."
   depends_on "texinfo" => :recommended
-  option "without-x", "Build without X11 support."
+  
+  option "with-x", "Build with X11 support."
     ##x11 libs unclear if these are sufficient since others are installed with cairo
   depends_on "libx11" if build.with? "x"
   depends_on "libxt" if build.with? "x"
@@ -56,11 +59,12 @@ class R < Formula
         if you ALSO have libomp installed.  Should unlink before installing:
         brew unlink libomp
 
-        X11
-        As of 9/2021, it appears Homebrew has add X11 libs and builds cairo with X11. Still need XQuartz.  Unclear how they interact...  libx* libs aren't needed if building --without-x
-
     EOS
   end
+
+  
+# X11
+# As of 9/2021, it appears Homebrew has add X11 libs and builds cairo with X11. Still need XQuartz.  Unclear how they interact...  libx* libs aren't needed if building --without-x
 
   # needed to preserve executable permissions on files without shebangs
   skip_clean "lib/R/bin", "lib/R/doc"
@@ -73,12 +77,11 @@ class R < Formula
       "--with-aqua",
       "--with-blas=-L#{Formula["openblas"].opt_lib} -lopenblas",
       "--with-lapack",
-      "--enable-R-shlib",
-
+      "--enable-R-shlib"
     ]
 
     ## homebrewlibs keg-only dependencies besides BLAS
-    ["readline", "icu4c"].each do |f|
+    ["readline"].each do |f|
       ENV.append "CPPFLAGS", "-I#{Formula[f].opt_include}"
       ENV.append "LDFLAGS", "-L#{Formula[f].opt_lib}"
     end
@@ -111,7 +114,7 @@ class R < Formula
       ENV.prepend_path "PATH", "#{Formula["llvm"].opt_bin}"
       ENV.prepend_path "CPATH", "#{HOMEBREW_PREFIX}/include"
       ENV.prepend_path "LIBRARY_PATH", "#{ENV["HOMEBREW_LIBRARY_PATHS"]}"
-      ENV.prepend "LDFLAGS", "-L#{Formula["llvm"].opt_lib}"
+      ENV.prepend "LDFLAGS", "-L#{Formula["llvm"].opt_lib} -Wl,-rpath,#{Formula["llvm"].opt_lib}"
 
       args += [
         "CC=#{Formula["llvm"].opt_bin}/clang",
@@ -176,9 +179,11 @@ class R < Formula
 
     # avoid triggering mandatory rebuilds of r when gcc is upgraded
     inreplace lib/"R/etc/Makeconf", Formula["gcc"].prefix.realpath,
-                                    Formula["gcc"].opt_prefix
+              Formula["gcc"].opt_prefix
+    
     inreplace lib/"R/etc/Makeconf", Formula["pcre2"].prefix.realpath,
-                                    Formula["pcre2"].opt_prefix
+              Formula["pcre2"].opt_prefix
+    
     if build.with? "tcl-tk"
       inreplace lib/"R/etc/Makeconf", Formula["tcl-tk"].prefix.realpath,
                 Formula["tcl-tk"].opt_prefix
@@ -196,7 +201,7 @@ class R < Formula
 
   test do
     assert_equal "[1] 2", shell_output("#{bin}/Rscript -e 'print(1+1)'").chomp
-    assert_equal ".dylib", shell_output("#{bin}/R CMD config DYLIB_EXT").chomp
+    assert_equal shared_library(""), shell_output("#{bin}/R CMD config DYLIB_EXT").chomp
 
     system bin/"Rscript", "-e", "if(!capabilities('cairo')) stop('cairo not available')"
 
