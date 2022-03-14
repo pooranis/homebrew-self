@@ -1,8 +1,8 @@
 class R < Formula
   desc "Software environment for statistical computing"
   homepage "https://www.r-project.org/"
-  url "https://cran.r-project.org/src/base/R-4/R-4.1.2.tar.gz"
-  sha256 "2036225e9f7207d4ce097e54972aecdaa8b40d7d9911cd26491fac5a0fab38af"
+  url "https://cran.r-project.org/src/base/R-4/R-4.1.3.tar.gz"
+  sha256 "15ff5b333c61094060b2a52e9c1d8ec55cc42dd029e39ca22abdaa909526fed6"
   license "GPL-2.0-or-later"
 
   livecheck do
@@ -10,9 +10,6 @@ class R < Formula
     regex(%r{href=(?:["']?|.*?/)R[._-]v?(\d+(?:\.\d+)+)\.t}i)
   end
 
-
-  ## See https://github.com/sethrfore/homebrew-r-srf
-  ## and https://github.com/adamhsparks/setup_macOS_for_R for help as well
 
   depends_on "pkg-config"
   depends_on "gcc" # for gfortran
@@ -36,16 +33,15 @@ class R < Formula
   depends_on "llvm" => :recommended
   option "without-texinfo", "Build without texinfo support.  Only needed to build the html manual."
   depends_on "texinfo" => :recommended
-  
-  option "with-x", "Build with X11 support."
-    ##x11 libs unclear if these are sufficient since others are installed with cairo
-  depends_on "libx11" if build.with? "x"
-  depends_on "libxt" if build.with? "x"
-  depends_on "libxmu" if build.with? "x"
 
   ## stuff we don't use
   depends_on "tcl-tk" => :optional
   depends_on "openjdk" => :optional
+  option "with-x", "Build without X11 support."
+    ##x11 libs unclear if these are sufficient since others are installed with cairo
+  depends_on "libx11" if build.with? "x"
+  depends_on "libxt" if build.with? "x"
+  depends_on "libxmu" if build.with? "x"
 
 
   def caveats
@@ -59,12 +55,16 @@ class R < Formula
         if you ALSO have libomp installed.  Should unlink before installing:
         brew unlink libomp
 
+        X11
+        As of 9/2021, it appears Homebrew has added X11 libs and builds cairo with X11. 
+        Still need XQuartz.  Unclear how they interact...  
+        libx* libs aren't needed if building --without-x (default)
+
     EOS
   end
 
   
-# X11
-# As of 9/2021, it appears Homebrew has add X11 libs and builds cairo with X11. Still need XQuartz.  Unclear how they interact...  libx* libs aren't needed if building --without-x
+
 
   # needed to preserve executable permissions on files without shebangs
   skip_clean "lib/R/bin", "lib/R/doc"
@@ -114,13 +114,17 @@ class R < Formula
       ENV.prepend_path "PATH", "#{Formula["llvm"].opt_bin}"
       ENV.prepend_path "CPATH", "#{HOMEBREW_PREFIX}/include"
       ENV.prepend_path "LIBRARY_PATH", "#{ENV["HOMEBREW_LIBRARY_PATHS"]}"
-      ENV.prepend "LDFLAGS", "-L#{Formula["llvm"].opt_lib} -Wl,-rpath,#{Formula["llvm"].opt_lib}"
+      ENV.prepend "LDFLAGS", "-L#{Formula["llvm"].opt_lib} -Wl,-rpath,/usr/local/opt/llvm/lib"
 
       args += [
+        "--enable-lto",
         "CC=#{Formula["llvm"].opt_bin}/clang",
         "CXX=#{Formula["llvm"].opt_bin}/clang++",
         "OBJC=#{Formula["llvm"].opt_bin}/clang",
-        "OBJCXX=#{Formula["llvm"].opt_bin}/clang++"
+        "OBJCXX=#{Formula["llvm"].opt_bin}/clang++",
+        "LTO=-flto=thin",
+        "LTO_FC=",
+        "LTO_LD=-Wl,-mllvm,-threads=4"
       ]
     else
       # BLAS detection fails with Xcode 12 due to missing prototype
