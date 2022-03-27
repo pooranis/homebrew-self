@@ -56,14 +56,19 @@ class R < Formula
         brew unlink libomp
 
         X11
-        As of 9/2021, it appears Homebrew has added X11 libs and builds cairo with X11. 
-        Still need XQuartz.  Unclear how they interact...  
+        As of 9/2021, it appears Homebrew has added X11 libs and builds cairo with X11.
+        Still need XQuartz.  Unclear how they interact...
         libx* libs aren't needed if building --without-x (default)
 
     EOS
   end
 
-  
+  ## https://github.com/r-lib/systemfonts/issues/84#issuecomment-1005981116
+  ## objective C++ is not correctly detected with commandlinetools
+  patch do
+    url "https://github.com/wch/r-source/commit/f205003ac5f5d9736af6e7547978960f24cb979f.patch"
+    sha256 "a0a635a27a850c89aa88d12564f95b3d1a82d25002d85d0b82e894a42b21d958"
+  end
 
 
   # needed to preserve executable permissions on files without shebangs
@@ -184,10 +189,10 @@ class R < Formula
     # avoid triggering mandatory rebuilds of r when gcc is upgraded
     inreplace lib/"R/etc/Makeconf", Formula["gcc"].prefix.realpath,
               Formula["gcc"].opt_prefix
-    
+
     inreplace lib/"R/etc/Makeconf", Formula["pcre2"].prefix.realpath,
               Formula["pcre2"].opt_prefix
-    
+
     if build.with? "tcl-tk"
       inreplace lib/"R/etc/Makeconf", Formula["tcl-tk"].prefix.realpath,
                 Formula["tcl-tk"].opt_prefix
