@@ -1,8 +1,8 @@
 class R < Formula
   desc "Software environment for statistical computing"
   homepage "https://www.r-project.org/"
-  url "https://cran.r-project.org/src/base/R-4/R-4.1.3.tar.gz"
-  sha256 "15ff5b333c61094060b2a52e9c1d8ec55cc42dd029e39ca22abdaa909526fed6"
+  url "https://cran.r-project.org/src/base/R-4/R-4.2.0.tar.gz"
+  sha256 "38eab7719b7ad095388f06aa090c5a2b202791945de60d3e2bb0eab1f5097488"
   license "GPL-2.0-or-later"
 
   livecheck do
@@ -30,51 +30,50 @@ class R < Formula
   uses_from_macos "libffi"
   uses_from_macos "icu4c"
 
-  depends_on "llvm" => :recommended
+  depends_on "llvm" => :optional
   option "without-texinfo", "Build without texinfo support.  Only needed to build the html manual."
   depends_on "texinfo" => :recommended
 
   ## stuff we don't use
+  depends_on "libomp" => :recommended
   depends_on "tcl-tk" => :optional
   depends_on "openjdk" => :optional
-  option "with-x", "Build without X11 support."
-    ##x11 libs unclear if these are sufficient since others are installed with cairo
-  depends_on "libx11" if build.with? "x"
-  depends_on "libxt" if build.with? "x"
-  depends_on "libxmu" if build.with? "x"
 
 
   def caveats
     <<~EOS
         TEXINFO
         If pdftex is also in your path, then you will also have
-        the ability to make pdf help files.
+        the ability to make pdf/html help files. Need inconsolata
+        and fancyvrb latex packages installed.
 
         LLVM/OpenMP
-        Using homebrew llvm allows for OpenMP.  There may be problems in installing packages
-        if you ALSO have libomp installed.  Should unlink before installing:
-        brew unlink libomp
+        Two ways to get OpenMP:
+        1. Install with apple clang and homebrew libomp (default/recommended).
+        2. Install with homebrew llvm (use --with-llvm --without-libomp)
+           There may be problems in installing packages
+           if you you build with homebrew llvm AND ALSO have libomp installed.
+           Should unlink before installing that way:
+           brew unlink libomp
 
-        X11
-        As of 9/2021, it appears Homebrew has added X11 libs and builds cairo with X11.
-        Still need XQuartz.  Unclear how they interact...
-        libx* libs aren't needed if building --without-x (default)
+        For best installation, use custom openblas and see info in that
+        formula for how to best set up libomp and gcc together:
+             brew info pooranis/self/openblas
+
 
     EOS
   end
-
-  ## https://github.com/r-lib/systemfonts/issues/84#issuecomment-1005981116
-  ## objective C++ is not correctly detected with commandlinetools
-  patch do
-    url "https://github.com/wch/r-source/commit/f205003ac5f5d9736af6e7547978960f24cb979f.patch"
-    sha256 "a0a635a27a850c89aa88d12564f95b3d1a82d25002d85d0b82e894a42b21d958"
-  end
-
 
   # needed to preserve executable permissions on files without shebangs
   skip_clean "lib/R/bin", "lib/R/doc"
 
   def install
+
+    if build.with? "libomp"
+      if build.with? "llvm"
+        odie "ERROR: can't build with both libomp and llvm, as llvm contains its own libomp and they will conflict.  Please choose one."
+      end
+    end
 
     args = [
       "--prefix=#{prefix}",
@@ -82,7 +81,14 @@ class R < Formula
       "--with-aqua",
       "--with-blas=-L#{Formula["openblas"].opt_lib} -lopenblas",
       "--with-lapack",
-      "--enable-R-shlib"
+      "--enable-R-shlib",
+      "--enable-lto",
+      "--without-x",
+      "--without-static-cairo",
+      # This isn't necessary to build R, but it's saved in Makeconf
+      # and helps CRAN packages find gfortran when Homebrew may not be
+      # in PATH (e.g. under RStudio, launched from Finder)
+      "FC=#{Formula["gcc"].opt_bin}/gfortran",
     ]
 
     ## homebrewlibs keg-only dependencies besides BLAS
@@ -104,38 +110,36 @@ class R < Formula
       args << "--disable-java"
     end
 
-    if build.without? "x"
-      args << "--without-x"
-    else
-      ## have to use general /usr/local paths because they all have to be in the same place
-      ## i wish there was env variable to set with list of paths
-      args += [
-        "--x-includes=#{HOMEBREW_PREFIX}/include",
-        "--x-libraries=#{HOMEBREW_PREFIX}/lib"
-      ]
-    end
-
     if build.with? "llvm"
       ENV.prepend_path "PATH", "#{Formula["llvm"].opt_bin}"
       ENV.prepend_path "CPATH", "#{HOMEBREW_PREFIX}/include"
       ENV.prepend_path "LIBRARY_PATH", "#{ENV["HOMEBREW_LIBRARY_PATHS"]}"
-      ENV.prepend "LDFLAGS", "-L#{Formula["llvm"].opt_lib} -Wl,-rpath,/usr/local/opt/llvm/lib"
+      ENV.prepend "LDFLAGS", "-L#{Formula["llvm"].opt_lib}"
 
       args += [
-        "--enable-lto",
         "CC=#{Formula["llvm"].opt_bin}/clang",
         "CXX=#{Formula["llvm"].opt_bin}/clang++",
         "OBJC=#{Formula["llvm"].opt_bin}/clang",
         "OBJCXX=#{Formula["llvm"].opt_bin}/clang++",
         "LTO=-flto=thin",
-        "LTO_FC=",
+        "LTO_FC=-flto",
         "LTO_LD=-Wl,-mllvm,-threads=4"
       ]
     else
       # BLAS detection fails with Xcode 12 due to missing prototype
       # https://bugs.r-project.org/bugzilla/show_bug.cgi?id=18024
       # unclear if needed for Apple Clang, but put it here anyway as upstream formula has it
-      ENV.append "CFLAGS", "-Wno-implicit-function-declaration"
+      ENV.append "CFLAGS", "-Wno-implicit-function-declaration -g -O3 -pipe -mtune=native"
+      ENV.append "CXXFLAGS", "-g -O3 -pipe -mtune=native"
+    end
+
+    if build.with? "libomp"
+      args += [
+        "R_OPENMP_CFLAGS=-Xclang -fopenmp -Wno-unused-command-line-argument -Wl,-lomp",
+        "SHLIB_OPENMP_CFLAGS=-Xclang -fopenmp -Wno-unused-command-line-argument -Wl,-lomp",
+        "SHLIB_OPENMP_CXXFLAGS=-Xclang -fopenmp -Wno-unused-command-line-argument -Wl,-lomp",
+        "SHLIB_OPENMP_FFLAGS=-fopenmp"
+      ]
     end
 
     if build.with? "texinfo"
