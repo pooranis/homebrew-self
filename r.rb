@@ -69,6 +69,9 @@ class R < Formula
   skip_clean "lib/R/bin", "lib/R/doc"
 
   def install
+    ## otherwise homebrew superenv uses CFLAGS -march=nehalem (replacing -march=native) which is old and replaces -O3 with -Os
+    ENV.runtime_cpu_detection
+    ENV["HOMEBREW_OPTIMIZATION_LEVEL"] = "O3"
 
     if build.with? "libomp"
       if build.with? "llvm"
@@ -130,8 +133,8 @@ class R < Formula
       # BLAS detection fails with Xcode 12 due to missing prototype
       # https://bugs.r-project.org/bugzilla/show_bug.cgi?id=18024
       # unclear if needed for Apple Clang, but put it here anyway as upstream formula has it
-      ENV.append "CFLAGS", "-Wno-implicit-function-declaration -g -O3 -pipe -mtune=native"
-      ENV.append "CXXFLAGS", "-g -O3 -pipe -mtune=native"
+      ENV.append "CFLAGS", "-Wno-implicit-function-declaration -g -O3 -pipe -march=native"
+      ENV.append "CXXFLAGS", "-g -O3 -pipe -march=native"
     end
 
     if build.with? "libomp"
