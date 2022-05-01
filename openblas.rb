@@ -37,6 +37,7 @@ def caveats
         mv libgomp* libgomp/
         ln -s /usr/local/opt/libomp/lib/libomp.a libgomp.a
         ln -s /usr/local/opt/libomp/lib/libomp.dylib libgomp.dylib
+        ln -s libgomp.dylib libgomp.1.dylib
         cd gcc/x86_64-apple-darwin21/11/include
         mkdir libgomp
         mv omp.h libgomp/

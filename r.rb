@@ -30,12 +30,13 @@ class R < Formula
   uses_from_macos "libffi"
   uses_from_macos "icu4c"
 
-  depends_on "llvm" => :optional
+  depends_on "libomp" => :recommended
   option "without-texinfo", "Build without texinfo support.  Only needed to build the html manual."
   depends_on "texinfo" => :recommended
 
   ## stuff we don't use
-  depends_on "libomp" => :recommended
+  option "with-llvm", "Build with homebrew llvm. See caveats."
+  depends_on "llvm" => :optional
   depends_on "tcl-tk" => :optional
   depends_on "openjdk" => :optional
 
@@ -44,15 +45,15 @@ class R < Formula
     <<~EOS
         TEXINFO
         If pdftex is also in your path, then you will also have
-        the ability to make pdf/html help files. Need inconsolata
-        and fancyvrb latex packages installed.
+        the ability to make pdf/html help files. Need inconsolata,
+        helvetic and fancyvrb latex packages installed.
 
         LLVM/OpenMP
         Two ways to get OpenMP:
         1. Install with apple clang and homebrew libomp (default/recommended).
-        2. Install with homebrew llvm (use --with-llvm --without-libomp)
+        2. Install with homebrew llvm's clang (use --with-llvm --without-libomp)
            There may be problems in installing packages
-           if you you build with homebrew llvm AND ALSO have libomp installed.
+           if you build with homebrew llvm AND ALSO have libomp installed.
            Should unlink before installing that way:
            brew unlink libomp
 
