@@ -21,7 +21,7 @@ class Openblas < Formula
 def caveats
     <<~EOS
     This formula is very custom and needs editing before installation for the specific
-    macOS version and number of threads you have (because it is faster than compiling
+    macOS version and cpu target (because it is faster than compiling
     for dynamic architecture).
 
     The motivation for it is from https://github.com/Homebrew/homebrew-core/issues/75506
@@ -38,16 +38,15 @@ def caveats
     you should install homebrew gcc and either llvm or libomp first.
     Then replace gcc's libgomp with the respective libomp.  Here is example
     using libomp (which is currently how formula is written):
-        cd /usr/local/opt/gcc/lib/gcc/11
-        mkdir libgomp
-        mv libgomp* libgomp/
-        ln -s /usr/local/opt/libomp/lib/libomp.a libgomp.a
-        ln -s /usr/local/opt/libomp/lib/libomp.dylib libgomp.dylib
-        ln -s libgomp.dylib libgomp.1.dylib
-        cd gcc/x86_64-apple-darwin21/11/include
-        mkdir libgomp
-        mv omp.h libgomp/
-        ln -s /usr/local/opt/libomp/include/* .
+        cd /usr/local/opt/libomp/lib
+        ln -s libomp.dylib libgomp.dylib
+        ln -s libomp.a libgomp.a
+        brew unlink libomp
+        brew link libomp
+
+    I think using the gcc libgomp headers is ok (this is what conda does).  The resulting openblas
+    fails/warns on one of the tests, but the conda openblas also fails that one (and I think openblas
+    compiled with gcc/libgomp does too?).
 
     Interestingly homebrew llvm symlinks libomp to libgomp!  So, can symlink
         that instead.  This will ensure that R libs are only linked against libomp.
@@ -57,12 +56,14 @@ end
 
   def install
     ENV.runtime_cpu_detection
-    ENV.permit_arch_flags # otherwise homebrew superenv removes -m64
+    ENV.permit_arch_flags # otherwise homebrew superenv removes -m64 unclear whether this is bad or not?
     ENV.deparallelize # build is parallel by default, but setting -j confuses it
 
     # ENV["DYNAMIC_ARCH"] = "1"
     ENV["USE_OPENMP"] = "1"
     # Force a large NUM_THREADS to support larger Macs than the VMs that build the bottles
+    # ENV["NUM_THREADS"] = 52
+    ## Use number of threads present in machine
     ENV["NUM_THREADS"] = Hardware::CPU.cores.to_s
     # ENV["TARGET"] = case Hardware.oldest_cpu
     # when :arm_vortex_tempest
@@ -71,14 +72,15 @@ end
     #   Hardware.oldest_cpu.upcase.to_s
     # end
 
+    # use native processor as target
     ENV["TARGET"] = "HASWELL"
     ## Edit MacOS SDK that you have installed /Library/Developer/CommandLineTools/SDKs
-    ENV.prepend "CPPFLAGS", "-mmacosx-version-min=12.3 -I#{Formula["libomp"].opt_include} -I#{HOMEBREW_PREFIX}/include -Xclang -fopenmp"
+    ENV.prepend "CPPFLAGS", "-mmacosx-version-min=12.3 -I#{Formula["libomp"].opt_include} -Xclang -fopenmp"
     ENV.prepend "LDFLAGS", "-L#{Formula["libomp"].opt_lib} -L#{HOMEBREW_PREFIX}/lib -lomp"
 
 
-    # Must call in two steps
-    system "make", "FC=#{Formula["gcc"].opt_bin}/gfortran", "CFLAGS=${CPPFLAGS}", "VERBOSE=1", "PREFIX=#{prefix}", "libs", "netlib", "shared"
+    # Must call in two steps and use make_nb_jobs to reduce the parallel make
+    system "make", "FC=gfortran", "CFLAGS=${CPPFLAGS}", "VERBOSE=1", "PREFIX=#{prefix}", "libs", "netlib", "shared"
     # system "make", "CC=#{ENV.cc}", "FC=gfortran", "libs", "netlib", "shared"
     system "make", "PREFIX=#{prefix}", "install"
 

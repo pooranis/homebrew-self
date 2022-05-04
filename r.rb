@@ -69,7 +69,7 @@ class R < Formula
   skip_clean "lib/R/bin", "lib/R/doc"
 
   def install
-    ## otherwise homebrew superenv uses CFLAGS -march=nehalem (replacing -march=native) which is old and replaces -O3 with -Os
+    ## otherwise homebrew superenv replaces CFLAGS -march=native with -march=nehalem and replaces -O3 with -Os
     ENV.runtime_cpu_detection
     ENV["HOMEBREW_OPTIMIZATION_LEVEL"] = "O3"
 
@@ -142,7 +142,11 @@ class R < Formula
         "R_OPENMP_CFLAGS=-Xclang -fopenmp -Wno-unused-command-line-argument -Wl,-lomp",
         "SHLIB_OPENMP_CFLAGS=-Xclang -fopenmp -Wno-unused-command-line-argument -Wl,-lomp",
         "SHLIB_OPENMP_CXXFLAGS=-Xclang -fopenmp -Wno-unused-command-line-argument -Wl,-lomp",
-        "SHLIB_OPENMP_FFLAGS=-fopenmp"
+        ## put libomp first in path to avoid linking to libgomp
+        ## also make sure libgomp is symlinked to libomp either in libomp lib dir
+        ## or in gcc lib dir
+        ## unclear whether -lomp is needed with the former
+        "SHLIB_OPENMP_FFLAGS=-fopenmp -L#{Formula["libomp"].opt_lib} -lomp"
       ]
     end
 
