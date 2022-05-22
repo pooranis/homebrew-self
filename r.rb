@@ -146,6 +146,7 @@ class R < Formula
         ## also make sure libgomp is symlinked to libomp either in libomp lib dir
         ## or in gcc lib dir
         ## unclear whether -lomp is needed with the former
+        "R_OPENMP_FFLAGS='-fopenmp -L#{Formula["libomp"].opt_lib} -lomp'",
         "SHLIB_OPENMP_FFLAGS=-fopenmp -L#{Formula["libomp"].opt_lib} -lomp"
       ]
     end
@@ -218,6 +219,8 @@ class R < Formula
     site_library = HOMEBREW_PREFIX/"lib/R/#{short_version}/site-library"
     site_library.mkpath
     ln_s site_library, lib/"R/site-library"
+    ## avoid deleting when empty
+    system "echo", "dummy", ">", "#{site_library}/dummy"
   end
 
   test do
