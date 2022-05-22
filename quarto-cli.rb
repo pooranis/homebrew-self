@@ -7,8 +7,6 @@ class QuartoCli < Formula
   sha256 "d6c0afa3a99f35e2afcfd863b4f6bbbfe94864f5beacf1c157efca5e7aeb3b14"
   license "GPL-2"
 
-  # depends_on "cmake" => :build
-
   def install
     inreplace "bin/quarto", '${BASH_SOURCE[0]}', "#{prefix}/libexec/bin/quarto"
     libexec.install "bin/"
