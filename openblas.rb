@@ -77,10 +77,12 @@ end
     ## Edit MacOS SDK that you have installed /Library/Developer/CommandLineTools/SDKs
     ENV.prepend "CPPFLAGS", "-mmacosx-version-min=12.3 -I#{Formula["libomp"].opt_include} -Xclang -fopenmp"
     ENV.prepend "LDFLAGS", "-L#{Formula["libomp"].opt_lib} -L#{HOMEBREW_PREFIX}/lib -lomp"
-
+    ENV.prepend "FFLAGS", "-mmacosx-version-min=12.3"
+    # limit build to use half threads
+    ENV["MAKE_NB_JOBS"] = (Hardware::CPU.cores / 2.to_f).ceil.to_s
 
     # Must call in two steps and use make_nb_jobs to reduce the parallel make
-    system "make", "FC=gfortran", "CFLAGS=${CPPFLAGS}", "VERBOSE=1", "PREFIX=#{prefix}", "libs", "netlib", "shared"
+    system "make", "FC=gfortran", "CFLAGS=${CPPFLAGS}", "FFLAGS=${FFLAGS}", "MAKE_NB_JOBS=${MAKE_NB_JOBS}", "VERBOSE=1", "PREFIX=#{prefix}", "libs", "netlib", "shared"
     # system "make", "CC=#{ENV.cc}", "FC=gfortran", "libs", "netlib", "shared"
     system "make", "PREFIX=#{prefix}", "install"
 
