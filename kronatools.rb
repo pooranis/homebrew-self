@@ -1,8 +1,9 @@
 class Kronatools < Formula
   desc "Krona Tools is a set of scripts to create Krona charts from several Bioinformatics tools as well as from text and XML files."
   homepage "https://github.com/marbl/Krona/wiki"
-  url "https://github.com/marbl/Krona/releases/download/v2.7/KronaTools-2.7.tar"
-  sha256 "388270ac299da7e38b96bb144e72bd6844d42176c327c03a594e338d19a56f73"
+  version "2.8.1"
+  url "https://github.com/marbl/Krona/releases/download/v#{version}/KronaTools-#{version}.tar"
+  sha256 "f3ab44bf172e1f846e8977c7443d2e0c9676b421b26c50e91fa996d70a6bfd10"
 
   skip_clean "taxonomy"
 
