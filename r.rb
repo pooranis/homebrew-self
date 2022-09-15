@@ -1,8 +1,14 @@
 class R < Formula
-  desc "Software environment for statistical computing"
+  # desc "Software environment for statistical computing"
+  # homepage "https://www.r-project.org/"
+  # url "https://cran.r-project.org/src/base/R-4/R-4.2.1.tar.gz"
+  # sha256 "4d52db486d27848e54613d4ee977ad952ec08ce17807e1b525b10cd4436c643f"
+  # license "GPL-2.0-or-later"
+  desc "Software environment for statistical computing - patched version"
   homepage "https://www.r-project.org/"
-  url "https://cran.r-project.org/src/base/R-4/R-4.2.1.tar.gz"
-  sha256 "4d52db486d27848e54613d4ee977ad952ec08ce17807e1b525b10cd4436c643f"
+  url "https://cran.r-project.org/src/base-prerelease/R-patched_2022-09-14_r82853.tar.gz"
+  version "4.2.1-r82853"
+  sha256 "240f4125b567ae1c596c68b8891da848b2b9f8241700ec6c9fba4cdbd7d7ab83"
   license "GPL-2.0-or-later"
 
   livecheck do
@@ -14,7 +20,7 @@ class R < Formula
   depends_on "pkg-config"
   depends_on "gcc" # for gfortran
   depends_on "gettext"
-  depends_on "jpeg"
+  depends_on "jpeg-turbo"
   depends_on "libpng"
   depends_on "openblas"
   depends_on "pcre2"
@@ -23,12 +29,12 @@ class R < Formula
   depends_on "libtiff"
   depends_on "pango"
   depends_on "cairo"
+  depends_on "libxt" ## because homebrew builds cairo with only partial set of x11 libs, some packages assume all exist - libxt Xtrinsic seems to be most popular missing one
   # depends_on "libffi" llvm uses macos libffi
-  # depends_on "icu4c" this seems to be used even without dependency?
+  depends_on "icu4c" # stringi needs newer icu4c
 
   uses_from_macos "curl"
   uses_from_macos "libffi"
-  uses_from_macos "icu4c"
 
   depends_on "libomp" => :recommended
   option "without-texinfo", "Build without texinfo support.  Only needed to build the html manual."
@@ -88,6 +94,7 @@ class R < Formula
       "--enable-R-shlib",
       "--enable-lto",
       "--without-x",
+      "--with-cairo",
       "--without-static-cairo",
       # This isn't necessary to build R, but it's saved in Makeconf
       # and helps CRAN packages find gfortran when Homebrew may not be
@@ -143,8 +150,8 @@ class R < Formula
         "SHLIB_OPENMP_CFLAGS=-Xclang -fopenmp -Wno-unused-command-line-argument -Wl,-lomp",
         "SHLIB_OPENMP_CXXFLAGS=-Xclang -fopenmp -Wno-unused-command-line-argument -Wl,-lomp",
         ## put libomp first in path to avoid linking to libgomp
-        ## also make sure libgomp is symlinked to libomp either in libomp lib dir
-        ## or in gcc lib dir
+        ## could also see if libgomp is symlinked to libomp either in libomp lib dir
+        ## or in gcc lib dir - but in practice seems ok without
         ## unclear whether -lomp is needed with the former
         "R_OPENMP_FFLAGS='-fopenmp -L#{Formula["libomp"].opt_lib} -lomp'",
         "SHLIB_OPENMP_FFLAGS=-fopenmp -L#{Formula["libomp"].opt_lib} -lomp"
@@ -210,6 +217,11 @@ class R < Formula
     if build.with? "tcl-tk"
       inreplace lib/"R/etc/Makeconf", Formula["tcl-tk"].prefix.realpath,
                 Formula["tcl-tk"].opt_prefix
+    end
+
+    if build.with? "openjdk"
+      inreplace lib/"R/etc/Makeconf", Formula["openjdk"].prefix.realpath,
+                Formula["openjdk"].opt_prefix
     end
 
   end
