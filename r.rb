@@ -29,12 +29,11 @@ class R < Formula
   depends_on "libtiff"
   depends_on "pango"
   depends_on "cairo"
-  depends_on "libxt" ## because homebrew builds cairo with only partial set of x11 libs, some packages assume all exist - libxt Xtrinsic seems to be most popular missing one
-  # depends_on "libffi" llvm uses macos libffi
-  depends_on "icu4c" # stringi needs newer icu4c
+#  depends_on "libxt" ## because homebrew builds cairo with only partial set of x11 libs, some packages assume all exist - libxt Xtrinsic seems to be most popular missing one
 
   uses_from_macos "curl"
   uses_from_macos "libffi"
+  uses_from_macos "icu4c"
 
   depends_on "libomp" => :recommended
   option "without-texinfo", "Build without texinfo support.  Only needed to build the html manual."
@@ -221,6 +220,8 @@ class R < Formula
 
     if build.with? "openjdk"
       inreplace lib/"R/etc/Makeconf", Formula["openjdk"].prefix.realpath,
+                Formula["openjdk"].opt_prefix
+      inreplace lib/"R/etc/ldpaths", Formula["openjdk"].prefix.realpath,
                 Formula["openjdk"].opt_prefix
     end
 
