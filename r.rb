@@ -6,9 +6,8 @@ class R < Formula
   # license "GPL-2.0-or-later"
   desc "Software environment for statistical computing - patched version"
   homepage "https://www.r-project.org/"
-  url "https://cran.r-project.org/src/base-prerelease/R-patched_2022-09-14_r82853.tar.gz"
-  version "4.2.1-r82853"
-  sha256 "240f4125b567ae1c596c68b8891da848b2b9f8241700ec6c9fba4cdbd7d7ab83"
+  url "https://cran.r-project.org/src/base/R-4/R-4.2.1.tar.gz"
+  sha256 "4d52db486d27848e54613d4ee977ad952ec08ce17807e1b525b10cd4436c643f"
   license "GPL-2.0-or-later"
 
   livecheck do
@@ -29,11 +28,12 @@ class R < Formula
   depends_on "libtiff"
   depends_on "pango"
   depends_on "cairo"
-#  depends_on "libxt" ## because homebrew builds cairo with only partial set of x11 libs, some packages assume all exist - libxt Xtrinsic seems to be most popular missing one
+  #  depends_on "libxt" ## because homebrew builds cairo with only partial set of x11 libs, some packages assume all exist - libxt Xtrinsic seems to be most popular missing one
+  depends_on "icu4c" ## stringi needs newer version, so for consistency
 
   uses_from_macos "curl"
   uses_from_macos "libffi"
-  uses_from_macos "icu4c"
+  # uses_from_macos "icu4c"
 
   depends_on "libomp" => :recommended
   option "without-texinfo", "Build without texinfo support.  Only needed to build the html manual."
@@ -42,8 +42,8 @@ class R < Formula
   ## stuff we don't use
   option "with-llvm", "Build with homebrew llvm. See caveats."
   depends_on "llvm" => :optional
-  depends_on "tcl-tk" => :optional
   depends_on "openjdk" => :optional
+  depends_on "tcl-tk" => :optional # too much trouble
 
 
   def caveats
@@ -102,7 +102,7 @@ class R < Formula
     ]
 
     ## homebrewlibs keg-only dependencies besides BLAS
-    ["readline"].each do |f|
+    ["readline", "icu4c"].each do |f|
       ENV.append "CPPFLAGS", "-I#{Formula[f].opt_include}"
       ENV.append "LDFLAGS", "-L#{Formula[f].opt_lib}"
     end
@@ -213,10 +213,13 @@ class R < Formula
     inreplace lib/"R/etc/Makeconf", Formula["pcre2"].prefix.realpath,
               Formula["pcre2"].opt_prefix
 
+
     if build.with? "tcl-tk"
       inreplace lib/"R/etc/Makeconf", Formula["tcl-tk"].prefix.realpath,
                 Formula["tcl-tk"].opt_prefix
     end
+
+
 
     if build.with? "openjdk"
       inreplace lib/"R/etc/Makeconf", Formula["openjdk"].prefix.realpath,
