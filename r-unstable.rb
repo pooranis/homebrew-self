@@ -14,24 +14,26 @@ class RUnstable < Formula
   keg_only "this is EXPERIMENTAL: trying different install options"
 
 
+  ##  build with XQuartz /opt/X11 and apple accelerate
   depends_on "pkg-config"
   depends_on "gcc" # for gfortran
   depends_on "gettext"
   depends_on "jpeg-turbo"
-  depends_on "libpng"
+  # depends_on "libpng" ## found in X11
   # depends_on "openblas"
   depends_on "pcre2"
   depends_on "readline"
   depends_on "xz"
   depends_on "libtiff"
-  depends_on "pango"
-  depends_on "cairo"
-  depends_on "libxt" ## because homebrew builds cairo with only partial set of x11 libs, some packages assume all exist - libxt Xtrinsic seems to be most popular missing one
-  # depends_on "libffi" llvm uses macos libffi
-  depends_on "icu4c" # stringi needs newer icu4c
+  # depends_on "pango"
+  # depends_on "cairo"
+  # depends_on "libxt" ## because homebrew builds cairo with only partial set of x11 libs, some packages assume all exist - libxt Xtrinsic seems to be most popular missing one
+  # # depends_on "libffi" llvm uses macos libffi
+  # depends_on "icu4c" # stringi needs newer icu4c
 
   uses_from_macos "curl"
   uses_from_macos "libffi"
+  uses_from_macos "icu4c"
 
   depends_on "libomp" => :recommended
   option "without-texinfo", "Build without texinfo support.  Only needed to build the html manual."
@@ -46,23 +48,7 @@ class RUnstable < Formula
 
   def caveats
     <<~EOS
-        TEXINFO
-        If pdftex is also in your path, then you will also have
-        the ability to make pdf/html help files. Need inconsolata,
-        helvetic and fancyvrb latex packages installed.
-
-        LLVM/OpenMP
-        Two ways to get OpenMP:
-        1. Install with apple clang and homebrew libomp (default/recommended).
-        2. Install with homebrew llvm's clang (use --with-llvm --without-libomp)
-           There may be problems in installing packages
-           if you build with homebrew llvm AND ALSO have libomp installed.
-           Should unlink before installing that way:
-           brew unlink libomp
-
-        For best installation, use custom openblas and see info in that
-        formula for how to best set up libomp and gcc together:
-             brew info pooranis/self/openblas
+        Builds using system Accelerate, X11
 
 
     EOS
@@ -86,18 +72,23 @@ class RUnstable < Formula
       "--prefix=#{prefix}",
       "--enable-memory-profiling",
       "--with-aqua",
-      '--with-blas="-framework Accelerate"',
+      "--with-blas=-framework Accelerate",
       "--with-lapack",
       "--enable-R-shlib",
       "--enable-lto",
-      "--without-x",
-      "--with-cairo",
-      "--without-static-cairo",
+      #      "--without-x",
+      "--x-libraries=/opt/X11/lib",
+      "--x-includes=/opt/X11/include",
       # This isn't necessary to build R, but it's saved in Makeconf
       # and helps CRAN packages find gfortran when Homebrew may not be
       # in PATH (e.g. under RStudio, launched from Finder)
       "FC=#{Formula["gcc"].opt_bin}/gfortran",
     ]
+
+    ## X11
+    ENV.append_path "PKG_CONFIG_PATH", "/opt/X11/lib/pkgconfig:/opt/X11/share/pkgconfig"
+    ENV.append "CPPFLAGS", "-I/opt/X11/include"
+    ENV.append "LDFLAGS", "-L/opt/X11/lib"
 
     ## homebrewlibs keg-only dependencies besides BLAS
     ["readline"].each do |f|
@@ -156,6 +147,7 @@ class RUnstable < Formula
     end
 
     if build.with? "texinfo"
+      ohai "#{ORIGINAL_PATHS}"
       pdftexpath = which("pdflatex", path = ORIGINAL_PATHS)
       if pdftexpath.nil?
         odie "Building with texinfo, but pdflatex not found in original PATH.  It is only
@@ -169,16 +161,16 @@ class RUnstable < Formula
 
 
     system "./configure", *args
-#    ENV.deparallelize do
+    ENV.deparallelize do
       system "make"
       system "make", "install"
-#    end
+    end
 
     cd "src/nmath/standalone" do
       system "make"
-#      ENV.deparallelize do
+      ENV.deparallelize do
         system "make", "install"
-#      end
+      end
     end
 
     ## build manuals
@@ -215,6 +207,14 @@ class RUnstable < Formula
       inreplace lib/"R/etc/Makeconf", Formula["tcl-tk"].prefix.realpath,
                 Formula["tcl-tk"].opt_prefix
     end
+
+    if build.with? "openjdk"
+      inreplace lib/"R/etc/Makeconf", Formula["openjdk"].prefix.realpath,
+                Formula["openjdk"].opt_prefix
+      inreplace lib/"R/etc/ldpaths", Formula["openjdk"].prefix.realpath,
+                Formula["openjdk"].opt_prefix
+    end
+
 
   end
 
