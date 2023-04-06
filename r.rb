@@ -1,13 +1,8 @@
 class R < Formula
-  # desc "Software environment for statistical computing"
-  # homepage "https://www.r-project.org/"
-  # url "https://cran.r-project.org/src/base/R-4/R-4.2.1.tar.gz"
-  # sha256 "4d52db486d27848e54613d4ee977ad952ec08ce17807e1b525b10cd4436c643f"
-  # license "GPL-2.0-or-later"
   desc "Software environment for statistical computing - patched version"
   homepage "https://www.r-project.org/"
-  url "https://cran.r-project.org/src/base/R-4/R-4.2.1.tar.gz"
-  sha256 "4d52db486d27848e54613d4ee977ad952ec08ce17807e1b525b10cd4436c643f"
+  url "https://cran.r-project.org/src/base/R-4/R-4.2.3.tar.gz"
+  sha256 "55e4a9a6d43be314e2c03d0266a6fa5444afdce50b303bfc3b82b3979516e074"
   license "GPL-2.0-or-later"
 
   livecheck do
@@ -74,6 +69,10 @@ class R < Formula
   skip_clean "lib/R/bin", "lib/R/doc"
 
   def install
+    # `configure` doesn't like curl 8+, but convince it that everything is ok.
+    # TODO: report this upstream.
+    ENV["r_cv_have_curl728"] = "yes"
+
     ## otherwise homebrew superenv replaces CFLAGS -march=native with -march=nehalem and replaces -O3 with -Os
     ENV.runtime_cpu_detection
     ENV["HOMEBREW_OPTIMIZATION_LEVEL"] = "O3"
