@@ -1,8 +1,8 @@
 class Openblas < Formula
   desc "Optimized BLAS library"
   homepage "https://www.openblas.net/"
-  url "https://github.com/xianyi/OpenBLAS/archive/v0.3.23.tar.gz"
-  sha256 "5d9491d07168a5d00116cdc068a40022c3455bf9293c7cb86a65b1054d7e5114"
+  url "https://github.com/xianyi/OpenBLAS/archive/refs/tags/v0.3.26.tar.gz"
+  sha256 "4e6e4f5cb14c209262e33e6816d70221a2fe49eb69eaf0a06f065598ac602c68"
   license "BSD-3-Clause"
   head "https://github.com/xianyi/OpenBLAS.git", branch: "develop"
 
@@ -38,7 +38,7 @@ def caveats
     you should install homebrew gcc and either llvm or libomp first.
     Then replace gcc's libgomp with the respective libomp.  Here is example
     using libomp (which is currently how formula is written):
-        cd /usr/local/opt/libomp/lib
+        cd /opt/homebrew/opt/libomp/lib
         ln -s libomp.dylib libgomp.dylib
         ln -s libomp.a libgomp.a
         brew unlink libomp
@@ -67,15 +67,20 @@ end
     # ENV["NUM_THREADS"] = 56
     ## Use number of threads present in machine
     ENV["NUM_THREADS"] = Hardware::CPU.cores.to_s
-    # ENV["TARGET"] = case Hardware.oldest_cpu
-    # when :arm_vortex_tempest
-    #   "VORTEX"
-    # else
-    #   Hardware.oldest_cpu.upcase.to_s
-    # end
+    # See available targets in TargetList.txt
+    ENV["TARGET"] = case Hardware.oldest_cpu
+    when :arm_vortex_tempest
+      "VORTEX"
+    when :westmere
+      "NEHALEM"
+    else
+      Hardware.oldest_cpu.upcase.to_s
+    end
 
-    # use native processor as target
-    ENV["TARGET"] = "HASWELL"
+    # Apple Silicon does not support SVE
+    # https://github.com/xianyi/OpenBLAS/issues/4212
+    ENV["NO_SVE"] = "1" if Hardware::CPU.arm?
+    
     ## Edit MacOS SDK that you have installed /Library/Developer/CommandLineTools/SDKs
     ENV.prepend "CPPFLAGS", "-I#{Formula["libomp"].opt_include}"
     ENV.prepend "LDFLAGS", "-L#{Formula["libomp"].opt_lib} -L#{HOMEBREW_PREFIX}/lib -lomp"
@@ -118,8 +123,6 @@ end
     EOS
     system "clang", "test.c", "-I#{include}", "-L#{lib}", "-lopenblas",
                    "-o", "test"
-    # system ENV.cc, "test.c", "-I#{include}", "-L#{lib}", "-lopenblas",
-    #                "-o", "test"
     system "./test"
   end
 end
